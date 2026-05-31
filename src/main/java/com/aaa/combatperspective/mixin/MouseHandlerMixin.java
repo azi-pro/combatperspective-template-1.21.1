@@ -3,6 +3,7 @@ package com.aaa.combatperspective.mixin;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -42,9 +43,9 @@ public class MouseHandlerMixin {
         }
         boolean wasThirdPerson = isCameraThirdPerson(combatperspective$lastCameraType);
         boolean isNowThirdPerson = isCameraThirdPerson(current);
-        // 进入第三人称后视角 → 一次性释放鼠标
+        // 进入第三人称后视角 → 隐藏鼠标
         if (!wasThirdPerson && isNowThirdPerson && mc.screen == null) {
-            mc.mouseHandler.releaseMouse();
+            GLFW.glfwSetInputMode(mc.getWindow().getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
         }
         // 退出第三人称后视角 → 恢复抓取
         if (wasThirdPerson && !isNowThirdPerson) {
@@ -69,7 +70,7 @@ public class MouseHandlerMixin {
 
         boolean noScreen = mc.screen == null;
         if (isthirdPersonback && noScreen){
-            mc.mouseHandler.releaseMouse();
+            GLFW.glfwSetInputMode(mc.getWindow().getWindow(), GLFW.GLFW_CURSOR, GLFW.GLFW_CURSOR_HIDDEN);
         }
     }
 }

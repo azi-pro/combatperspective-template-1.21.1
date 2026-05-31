@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class CameraMixin {
     @Unique
     private float camerayaw;  // 世界水平角度固定(朝北
+    private float camerapitch;
 
     /** 每帧开头无条件清除，保证切回第一人称时立即复原 */
     @Inject(method = "setup", at = @At("HEAD"))
@@ -51,21 +52,23 @@ public class CameraMixin {
         Camera camera = (Camera) (Object) this;
 
         Vec3 eye = player.getEyePosition(partialTick);
+        double deltacameraY = 6;
+        double deltacameraZ = 6;
         double x = eye.x;
-        double y = eye.y + 6;
-        double z = eye.z + 4;
+        double y = eye.y + deltacameraY;
+        double z = eye.z + deltacameraZ;
 
-        float pitch = 60;
+        this.camerapitch = 45 ;
         this.camerayaw = 180;
 
         // 同步到静态变量，EntityMixin 只对这个 entity 生效
         CursorStore.setCameraYaw(this.camerayaw);
+        CursorStore.setCameraPitch(this.camerapitch);
         CursorStore.setCameraTarget(entity);
 
         ((CameraInvoker) camera).invokeSetPosition(new Vec3(x, y, z));
-        ((CameraInvoker) camera).invokeSetRotation(camerayaw, pitch);
+        ((CameraInvoker) camera).invokeSetRotation(camerayaw, camerapitch);
 
         ci.cancel();
     }
-
 }
