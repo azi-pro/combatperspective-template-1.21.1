@@ -53,7 +53,6 @@ public abstract class LivingEntityMixin {
 
     // =========================================================================
     // 修复疾跑跳跃方向方法
-    // @Inject：在 LivingEntity.jumpFromGround() 开头注入
     // cancellable = true：允许取消原方法执行
     // jumpFromGround 是所有生物跳跃的入口点
     // @param ci 回调信息
