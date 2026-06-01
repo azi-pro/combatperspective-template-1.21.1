@@ -96,8 +96,8 @@ import org.joml.Matrix4f;
 
 // =============================================================================
 // 客户端专用模组主类
-// @Mod 注解：dist = Dist.CLIENT 表示这仅在客户端加载
-// @EventBusSubscriber：自动将此类注册为事件监听器，value = Dist.CLIENT 表示仅客户端监听
+// Mod 注解：dist = Dist.CLIENT 表示这仅在客户端加载
+// EventBusSubscriber：自动将此类注册为事件监听器，value = Dist.CLIENT 表示仅客户端监听
 // =============================================================================
 @Mod(value = CombatPerspective.MOD_ID, dist = Dist.CLIENT)
 @EventBusSubscriber(modid = CombatPerspective.MOD_ID, value = Dist.CLIENT)
@@ -106,7 +106,7 @@ public class CombatPerspectiveClient {
     // =========================================================================
     // 构造函数：客户端模组初始化入口
     // 用于注册配置屏幕扩展点
-    // @param container 模组容器
+    // param container 模组容器
     // =========================================================================
     public CombatPerspectiveClient(ModContainer container) {
         // -------------------------------------------------------------------------
@@ -121,7 +121,7 @@ public class CombatPerspectiveClient {
 
     // =========================================================================
     // 客户端设置事件处理方法
-    // @SubscribeEvent：订阅 FMLClientSetupEvent，在客户端初始化时调用
+    // SubscribeEvent：订阅 FMLClientSetupEvent，在客户端初始化时调用
     // static 方法：事件监听器通常是静态的，以便被事件总线正确调用
     // =========================================================================
     @SubscribeEvent
@@ -149,7 +149,7 @@ public class CombatPerspectiveClient {
     // =========================================================================
     // 获取当前 FOV 的 getter 方法
     // 供其他类调用以获取视野角度值
-    // @return 当前 FOV 值
+    // return 当前 FOV 值
     // =========================================================================
     public static float getCurrentFov() {
         return currentFov;
@@ -157,9 +157,9 @@ public class CombatPerspectiveClient {
 
     // =========================================================================
     // FOV 计算事件处理方法
-    // @SubscribeEvent(priority = EventPriority.LOWEST)：以最低优先级监听
+    // SubscribeEvent(priority = EventPriority.LOWEST)：以最低优先级监听
     // 这样可以在其他修改 FOV 的代码之后执行
-    // @param event FOV 计算事件
+    // param event FOV 计算事件
     // =========================================================================
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onFovCompute(ComputeFovModifierEvent event) {
@@ -184,7 +184,7 @@ public class CombatPerspectiveClient {
     // =========================================================================
     // 渲染层级事件处理方法
     // 在渲染世界的特定阶段被调用，用于绘制额外的 UI 元素
-    // @param event 渲染层级事件
+    // param event 渲染层级事件
     // =========================================================================
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
@@ -361,11 +361,11 @@ public class CombatPerspectiveClient {
 
     // =========================================================================
     // 绘制面朝摄像头的十字标记
-    // @param src 顶点缓冲源
-    // @param mat 当前变换矩阵
-    // @param camPos 相机位置
-    // @param hitPos 命中位置
-    // @param color 颜色（ARGB格式）
+    // param src 顶点缓冲源
+    // param mat 当前变换矩阵
+    // param camPos 相机位置
+    // param hitPos 命中位置
+    // param color 颜色（ARGB格式）
     // =========================================================================
     private static void renderCross(MultiBufferSource.BufferSource src, Matrix4f mat,
                                     Vec3 camPos, Vec3 hitPos, int color) {
@@ -408,12 +408,12 @@ public class CombatPerspectiveClient {
 
     // =========================================================================
     // 绘制方块被命中面的边框（LINE_STRIP 模式）
-    // @param src 顶点缓冲源
-    // @param mat 当前变换矩阵
-    // @param dir 命中的面方向
-    // @param bp 方块位置
-    // @param hit 命中位置
-    // @param color 颜色
+    // param src 顶点缓冲源
+    // param mat 当前变换矩阵
+    // param dir 命中的面方向
+    // param bp 方块位置
+    // param hit 命中位置
+    // param color 颜色
     // =========================================================================
     private static void renderFaceOutline(MultiBufferSource.BufferSource src, Matrix4f mat,
                                           Direction dir, BlockPos bp, Vec3 hit, int color) {
@@ -437,11 +437,11 @@ public class CombatPerspectiveClient {
 
     // =========================================================================
     // 绘制实体轴对齐包围盒（AABB）的线框
-    // @param src 顶点缓冲源
-    // @param ps 坐标变换栈
-    // @param entity 被绘制线框的实体
-    // @param camPos 相机位置（用于相对坐标计算）
-    // @param color 颜色
+    // param src 顶点缓冲源
+    // param ps 坐标变换栈
+    // param entity 被绘制线框的实体
+    // param camPos 相机位置（用于相对坐标计算）
+    // param color 颜色
     // =========================================================================
     private static void renderEntityAABB(MultiBufferSource.BufferSource src,
                                          PoseStack ps, Entity entity, Vec3 camPos, int color) {
@@ -495,11 +495,11 @@ public class CombatPerspectiveClient {
 
     // =========================================================================
     // 绘制单条线段的辅助方法
-    // @param buf 顶点缓冲
-    // @param mat 变换矩阵
-    // @param x1/y1/z1 起点坐标
-    // @param x2/y2/z2 终点坐标
-    // @param color 颜色
+    // param buf 顶点缓冲
+    // param mat 变换矩阵
+    // param x1/y1/z1 起点坐标
+    // param x2/y2/z2 终点坐标
+    // param color 颜色
     // =========================================================================
     private static void line(VertexConsumer buf, Matrix4f mat,
                              float x1, float y1, float z1, float x2, float y2, float z2, int color) {
@@ -511,10 +511,10 @@ public class CombatPerspectiveClient {
 
     // =========================================================================
     // 计算方块被命中面的四个角坐标（相对于命中点，贴在表面上）
-    // @param dir 面的朝向方向
-    // @param bp 方块位置
-    // @param hit 命中位置
-    // @return 包含四个角的 float 数组 [x1,y1,z1, x2,y2,z2, x3,y3,z3, x4,y4,z4]
+    // param dir 面的朝向方向
+    // param bp 方块位置
+    // param hit 命中位置
+    // return 包含四个角的 float 数组 [x1,y1,z1, x2,y2,z2, x3,y3,z3, x4,y4,z4]
     // =========================================================================
     private static float[] faceCorners(Direction dir, BlockPos bp, Vec3 hit) {
         // 半格大小常量，用于计算面的边界

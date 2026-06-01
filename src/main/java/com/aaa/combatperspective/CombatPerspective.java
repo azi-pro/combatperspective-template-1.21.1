@@ -69,7 +69,7 @@ import static com.aaa.combatperspective.item.ModCreativeModeTabs.CP_TAB;
 
 // =============================================================================
 // 模组主类声明
-// @Mod 注解标记此类为 NeoForge 模组
+// Mod 注解标记此类为 NeoForge 模组
 // MOD_ID 必须与 META-INF/neoforge.mods.toml 中的 modId 一致
 // =============================================================================
 @Mod(CombatPerspective.MOD_ID)
@@ -136,7 +136,7 @@ public class CombatPerspective {
     // =========================================================================
     // 通用设置方法：在模组初始化的早期阶段调用
     // 用于执行一些需要注册表已就绪的初始化代码
-    // @param event 通用设置事件
+    // param event 通用设置事件
     // =========================================================================
     private void commonSetup(FMLCommonSetupEvent event) {
         // 输出日志，表示模组已加载
@@ -170,7 +170,7 @@ public class CombatPerspective {
 
     // =========================================================================
     // 添加创造模式物品方法：在构建创造模式物品栏时被调用
-    // @param event 创造模式标签页内容构建事件
+    // param event 创造模式标签页内容构建事件
     // event.getTabKey() 返回当前正在构建的标签页
     // event.accept() 将物品添加到该标签页的物品列表中
     // =========================================================================
@@ -196,9 +196,9 @@ public class CombatPerspective {
 
     // =========================================================================
     // 服务器启动事件处理方法
-    // @SubscribeEvent 注解表示此方法订阅了 ServerStartingEvent 事件
+    // SubscribeEvent 注解表示此方法订阅了 ServerStartingEvent 事件
     // 当服务器启动时（单人游戏创建世界或多人服务器启动），此方法会被调用
-    // @param event 服务器启动事件
+    // param event 服务器启动事件
     // =========================================================================
     @SubscribeEvent
     public void onServerStarting(ServerStartingEvent event) {

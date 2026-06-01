@@ -40,7 +40,7 @@ public class MouseHandlerMixin {
 
     // =========================================================================
     // 上一帧的视角类型（用于检测视角切换）
-    // @Unique：Mixin 类私有字段
+    // Unique：Mixin 类私有字段
     // =========================================================================
     @Unique
     private CameraType combatperspective$lastCameraType = CameraType.FIRST_PERSON;
@@ -48,9 +48,9 @@ public class MouseHandlerMixin {
     // =========================================================================
     // 阻止鼠标抓取方法
     // 当游戏尝试隐藏鼠标并进入"抓取"模式时拦截
-    // @Inject：在 MouseHandler.grabMouse() 开头注入
+    // Inject：在 MouseHandler.grabMouse() 开头注入
     // cancellable = true：允许取消原方法执行
-    // @param ci 回调信息
+    // param ci 回调信息
     // =========================================================================
     @Inject(method = "grabMouse()V", at = At.HEAD, cancellable = true)
     private void preventGrabInThirdPerson(CallbackInfo ci) {
@@ -66,8 +66,8 @@ public class MouseHandlerMixin {
 
     // =========================================================================
     // 辅助方法：判断是否为第三人称后视角
-    // @param mc Minecraft 实例
-    // @return true = 第三人称后视角
+    // param mc Minecraft 实例
+    // return true = 第三人称后视角
     // =========================================================================
     @Unique
     private boolean isthirdPersonback(Minecraft mc) {
@@ -76,8 +76,8 @@ public class MouseHandlerMixin {
 
     // =========================================================================
     // 辅助方法：判断视角类型是否为第三人称（非镜像）
-    // @param cameraType 视角类型
-    // @return true = 第三人称后视角
+    // param cameraType 视角类型
+    // return true = 第三人称后视角
     // =========================================================================
     @Unique
     private boolean isCameraThirdPerson(CameraType cameraType) {
@@ -89,9 +89,9 @@ public class MouseHandlerMixin {
     // =========================================================================
     // 视角切换监听方法
     // 检测视角变化并自动隐藏/显示鼠标
-    // @Inject：在 handleAccumulatedMovement() 开头注入
+    // Inject：在 handleAccumulatedMovement() 开头注入
     // handleAccumulatedMovement 每帧都会被调用，用于处理累积的鼠标移动
-    // @param ci 回调信息
+    // param ci 回调信息
     // =========================================================================
     @Inject(method = "handleAccumulatedMovement()V", at = At.HEAD)
     private void onCameraSwitch(CallbackInfo ci) {
@@ -141,10 +141,10 @@ public class MouseHandlerMixin {
     // =========================================================================
     // 锁定摄像机旋转方法
     // 在战斗视角模式下阻止鼠标旋转摄像机
-    // @Inject：在 turnPlayer() 开头注入
+    // Inject：在 turnPlayer() 开头注入
     // cancellable = true：允许取消原方法执行
-    // @param movementTime 鼠标移动时间增量
-    // @param ci 回调信息
+    // param movementTime 鼠标移动时间增量
+    // param ci 回调信息
     // =========================================================================
     @Inject(method = "turnPlayer(D)V", at = At.HEAD, cancellable = true)
     private void lockCameraInThirdPerson(double movementTime, CallbackInfo ci) {
@@ -160,8 +160,8 @@ public class MouseHandlerMixin {
     // =========================================================================
     // 第三人称释放鼠标方法
     // 确保在第三人称后视角时鼠标是隐藏的
-    // @Inject：在 handleAccumulatedMovement() 开头注入（与方法5是同一个注入点）
-    // @param ci 回调信息
+    // Inject：在 handleAccumulatedMovement() 开头注入（与方法5是同一个注入点）
+    // param ci 回调信息
     // =========================================================================
     @Inject(method = "handleAccumulatedMovement()V", at = At.HEAD)
     private void releaseMouseInThirdPerson(CallbackInfo ci) {

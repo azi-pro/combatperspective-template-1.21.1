@@ -135,8 +135,8 @@ public class Config {
     // =========================================================================
     // 物品名称验证器
     // 用于验证 ITEM_STRINGS 列表中的每个条目是否为有效的物品资源键
-    // @param obj 要验证的对象
-    // @return 如果是有效的物品名称则返回 true
+    // param obj 要验证的对象
+    // return 如果是有效的物品名称则返回 true
     // =========================================================================
     private static boolean validateItemName(final Object obj) {
         // instanceof 检查对象是否为 String 类型
@@ -146,7 +146,7 @@ public class Config {
 
     // =========================================================================
     // 配置事件处理内部类
-    // @EventBusSubscriber：自动注册到事件总线
+    // EventBusSubscriber：自动注册到事件总线
     // modid：指定只响应本模组的配置事件
     // =========================================================================
     @EventBusSubscriber(modid = CombatPerspective.MOD_ID)
@@ -154,8 +154,8 @@ public class Config {
         // =====================================================================
         // 配置加载事件处理方法
         // 当配置文件被加载时（游戏启动时）调用
-        // @SubscribeEvent：订阅 ModConfigEvent.Loading 事件
-        // @param configEvent 配置加载事件
+        // SubscribeEvent：订阅 ModConfigEvent.Loading 事件
+        // param configEvent 配置加载事件
         // =====================================================================
         @SubscribeEvent
         static void onLoad(final ModConfigEvent.Loading configEvent) {

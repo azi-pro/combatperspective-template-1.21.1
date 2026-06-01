@@ -83,7 +83,7 @@ public class ModCreativeModeTabs {
 
     // =========================================================================
     // 注册方法：将注册器绑定到事件总线
-    // @param eventBus 模组事件总线
+    // param eventBus 模组事件总线
     // =========================================================================
     public static void register(IEventBus eventBus){
         CREATIVE_MODE_TABS.register(eventBus);

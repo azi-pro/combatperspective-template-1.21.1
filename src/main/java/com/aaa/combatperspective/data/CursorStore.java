@@ -42,7 +42,7 @@ public class CursorStore {
     // =========================================================================
     // getter 方法：检查功能是否启用
     // 包访问权限：同包内的类可以直接访问
-    // @return 是否启用
+    // return 是否启用
     // =========================================================================
     static boolean isEnable() {
         return enable;
@@ -50,7 +50,7 @@ public class CursorStore {
 
     // =========================================================================
     // setter 方法：设置启用状态
-    // @param flag 启用标志
+    // param flag 启用标志
     // =========================================================================
     static void setEnable(boolean flag) {
         enable = flag;
@@ -58,7 +58,7 @@ public class CursorStore {
 
     // =========================================================================
     // getter 方法：获取鼠标 X 坐标
-    // @return 鼠标 X 坐标
+    // return 鼠标 X 坐标
     // =========================================================================
     static double getX() {
         return x;
@@ -66,7 +66,7 @@ public class CursorStore {
 
     // =========================================================================
     // getter 方法：获取鼠标 Y 坐标
-    // @return 鼠标 Y 坐标
+    // return 鼠标 Y 坐标
     // =========================================================================
     static double getY() {
         return y;
@@ -74,8 +74,8 @@ public class CursorStore {
 
     // =========================================================================
     // setter 方法：同时设置鼠标坐标
-    // @param px X 坐标
-    // @param py Y 坐标
+    // param px X 坐标
+    // param py Y 坐标
     // =========================================================================
     static void setPos(double px, double py) {
         x = px;
@@ -85,7 +85,7 @@ public class CursorStore {
     // =========================================================================
     // getter 方法：获取摄像机水平朝向角度（yaw）
     // 由 CameraMixin 每帧写入，供其他 Mixin 读取
-    // @return yaw 角度（度数）
+    // return yaw 角度（度数）
     // =========================================================================
     public static float getCameraYaw() {
         return cameraYaw;
@@ -93,7 +93,7 @@ public class CursorStore {
 
     // =========================================================================
     // setter 方法：设置摄像机水平朝向角度
-    // @param yaw 新的 yaw 角度
+    // param yaw 新的 yaw 角度
     // =========================================================================
     public static void setCameraYaw(float yaw) {
         cameraYaw = yaw;
@@ -101,13 +101,13 @@ public class CursorStore {
 
     // =========================================================================
     // getter 方法：获取摄像机垂直朝向角度（pitch）
-    // @return pitch 角度（度数）
+    // return pitch 角度（度数）
     // =========================================================================
     public static float getCameraPitch() { return cameraPitch;}
 
     // =========================================================================
     // setter 方法：设置摄像机垂直朝向角度
-    // @param pitch 新的 pitch 角度
+    // param pitch 新的 pitch 角度
     // =========================================================================
     public static void setCameraPitch(float pitch){
         cameraPitch = pitch;
@@ -116,7 +116,7 @@ public class CursorStore {
     // =========================================================================
     // getter 方法：获取摄像机当前指向的实体
     // 仅对本地玩家有效，用于判断战斗视角是否激活
-    // @return 实体对象，未激活时为 null
+    // return 实体对象，未激活时为 null
     // =========================================================================
     public static Object getCameraTarget() {
         return cameraTarget;
@@ -124,7 +124,7 @@ public class CursorStore {
 
     // =========================================================================
     // setter 方法：设置摄像机目标实体
-    // @param target 目标实体
+    // param target 目标实体
     // =========================================================================
     public static void setCameraTarget(Object target) {
         cameraTarget = target;
@@ -165,10 +165,10 @@ public class CursorStore {
     // =========================================================================
     // 设置射线命中信息
     // 由 LocalPlayerMixin.mouseLook 调用，存储射线检测结果
-    // @param pos 命中位置
-    // @param dir 命中方块的面方向（可能为 null）
-    // @param blockPos 命中方块的位置（可能为 null）
-    // @param isBlock 是否命中方块
+    // param pos 命中位置
+    // param dir 命中方块的面方向（可能为 null）
+    // param blockPos 命中方块的位置（可能为 null）
+    // param isBlock 是否命中方块
     // =========================================================================
     public static void setHit(net.minecraft.world.phys.Vec3 pos,
                               net.minecraft.core.Direction dir,
@@ -182,25 +182,25 @@ public class CursorStore {
 
     // =========================================================================
     // 获取命中位置
-    // @return Vec3 世界坐标中的命中点
+    // return Vec3 世界坐标中的命中点
     // =========================================================================
     public static net.minecraft.world.phys.Vec3 getHitPos()     { return hitPos; }
 
     // =========================================================================
     // 获取命中面方向
-    // @return Direction 面方向枚举值，未命中方块时可能为 null
+    // return Direction 面方向枚举值，未命中方块时可能为 null
     // =========================================================================
     public static net.minecraft.core.Direction getHitDir()      { return hitDir; }
 
     // =========================================================================
     // 获取命中方块的位置
-    // @return BlockPos 方块坐标，未命中方块时可能为 null
+    // return BlockPos 方块坐标，未命中方块时可能为 null
     // =========================================================================
     public static net.minecraft.core.BlockPos getHitBlockPos()  { return hitBlockPos; }
 
     // =========================================================================
     // 检查是否命中方块
-    // @return true = 命中方块，false = 命中实体或其他
+    // return true = 命中方块，false = 命中实体或其他
     // =========================================================================
     public static boolean isHitBlock()                          { return hitBlock; }
 

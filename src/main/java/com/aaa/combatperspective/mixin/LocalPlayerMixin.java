@@ -53,8 +53,8 @@ public abstract class LocalPlayerMixin {
     // =========================================================================
     // 战斗视角守卫方法
     // 判断当前是否应该启用战斗视角模式
-    // @param mc Minecraft 实例
-    // @return true = 启用战斗视角，false = 不启用
+    // param mc Minecraft 实例
+    // return true = 启用战斗视角，false = 不启用
     // =========================================================================
     private static boolean isThirdPersonback(Minecraft mc) {
         // 必须满足三个条件：
@@ -69,9 +69,9 @@ public abstract class LocalPlayerMixin {
     // =========================================================================
     // 禁用侧移方法
     // 在战斗视角模式下，不允许玩家左右移动
-    // @Inject：在 LocalPlayer.tick() 方法开头注入
+    // Inject：在 LocalPlayer.tick() 方法开头注入
     // at = At.HEAD：在方法开始时执行
-    // @param ci 回调信息
+    // param ci 回调信息
     // =========================================================================
     @Inject(method = "tick", at = @At("HEAD"))
     private void turnThenMove(CallbackInfo ci) {
@@ -92,9 +92,9 @@ public abstract class LocalPlayerMixin {
     // =========================================================================
     // 鼠标视觉方法：鼠标位置 → 世界射线 → 玩家看向交点
     // 这是战斗视角的核心逻辑
-    // @Inject：在 LocalPlayer.tick() 方法末尾注入
+    // Inject：在 LocalPlayer.tick() 方法末尾注入
     // at = At.TAIL：在方法结束时执行
-    // @param ci 回调信息
+    // param ci 回调信息
     // =========================================================================
     @Inject(method = "tick", at = At.TAIL)
     private void mouseLook(CallbackInfo ci) {
@@ -242,9 +242,9 @@ public abstract class LocalPlayerMixin {
     // =========================================================================
     // 覆盖疾跑判定方法
     // 修改原版疾跑条件：从「玩家朝向与移动方向一致」改为「移动方向与固定朝向夹角 < 45°」
-    // @Inject：在 LocalPlayer.aiStep() 方法末尾注入
+    // Inject：在 LocalPlayer.aiStep() 方法末尾注入
     // aiStep 是玩家物理模拟的核心方法
-    // @param ci 回调信息
+    // param ci 回调信息
     // =========================================================================
     @Inject(method = "aiStep", at = At.TAIL)
     private void overrideSprint(CallbackInfo ci) {
