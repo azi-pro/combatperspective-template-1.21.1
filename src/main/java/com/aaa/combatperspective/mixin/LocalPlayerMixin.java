@@ -70,7 +70,7 @@ public abstract class LocalPlayerMixin {
     // 禁用侧移方法
     // 在战斗视角模式下，不允许玩家左右移动
     // Inject：在 LocalPlayer.tick() 方法开头注入
-    // at = @At("HEAD")：在方法开始时执行
+    // at = At.HEAD：在方法开始时执行
     // param ci 回调信息
     // =========================================================================
     @Inject(method = "tick", at = @At("HEAD"))
@@ -93,7 +93,7 @@ public abstract class LocalPlayerMixin {
     // 鼠标视觉方法：鼠标位置 → 世界射线 → 玩家看向交点
     // 这是战斗视角的核心逻辑
     // Inject：在 LocalPlayer.tick() 方法末尾注入
-    // at = @At("TAIL")：在方法结束时执行
+    // at = At.TAIL：在方法结束时执行
     // param ci 回调信息
     // =========================================================================
     @Inject(method = "tick", at = @At("TAIL"))
