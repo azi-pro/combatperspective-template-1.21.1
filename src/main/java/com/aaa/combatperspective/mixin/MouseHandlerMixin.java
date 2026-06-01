@@ -52,7 +52,7 @@ public class MouseHandlerMixin {
     // cancellable = true：允许取消原方法执行
     // param ci 回调信息
     // =========================================================================
-    @Inject(method = "grabMouse()V", at = At.HEAD, cancellable = true)
+    @Inject(method = "grabMouse()V", at = @At("HEAD"), cancellable = true)
     private void preventGrabInThirdPerson(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
 
@@ -93,7 +93,7 @@ public class MouseHandlerMixin {
     // handleAccumulatedMovement 每帧都会被调用，用于处理累积的鼠标移动
     // param ci 回调信息
     // =========================================================================
-    @Inject(method = "handleAccumulatedMovement()V", at = At.HEAD)
+    @Inject(method = "handleAccumulatedMovement()V", at = @At("HEAD"))
     private void onCameraSwitch(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
 
@@ -146,7 +146,7 @@ public class MouseHandlerMixin {
     // param movementTime 鼠标移动时间增量
     // param ci 回调信息
     // =========================================================================
-    @Inject(method = "turnPlayer(D)V", at = At.HEAD, cancellable = true)
+    @Inject(method = "turnPlayer(D)V", at = @At("HEAD"), cancellable = true)
     private void lockCameraInThirdPerson(double movementTime, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
 
@@ -163,7 +163,7 @@ public class MouseHandlerMixin {
     // Inject：在 handleAccumulatedMovement() 开头注入（与方法5是同一个注入点）
     // param ci 回调信息
     // =========================================================================
-    @Inject(method = "handleAccumulatedMovement()V", at = At.HEAD)
+    @Inject(method = "handleAccumulatedMovement()V", at = @At("HEAD"))
     private void releaseMouseInThirdPerson(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
 

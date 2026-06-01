@@ -17,7 +17,7 @@ public abstract class LivingEntityMixin {
     @Invoker("getJumpPower")
     abstract float invokeGetJumpPower();
 
-    @Inject(method = "jumpFromGround", at = At.HEAD, cancellable = true)
+    @Inject(method = "jumpFromGround", at = @At("HEAD"), cancellable = true)
     private void fixSprintJumpDirection(CallbackInfo ci) {
         LivingEntity self = (LivingEntity) (Object) this;
 
