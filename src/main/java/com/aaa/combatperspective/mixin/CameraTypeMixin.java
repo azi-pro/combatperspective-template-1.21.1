@@ -29,17 +29,12 @@ public class CameraTypeMixin {
     }
 
     /**
-     * 修改视角切换逻辑，跳过原版第二人称视角
+     * 修改视角切换：第一人称 ↔ 第三人称后视角（跳过镜像第三人称）
      */
     @Inject(method = "cycle", at = @At("RETURN"), cancellable = true)
     private void modifyCycle(CallbackInfoReturnable<CameraType> ci) {
-        // ================= 你可以在这里写你的跳过逻辑 =================
-        // 示例：
-        // CameraType current = (CameraType) (Object) this;
-        // if (当前不是第一人称) {
-        //     ci.setReturnValue(CameraType.FIRST_PERSON);
-        //     ci.cancel();
-        // }
-        // ============================================================
+        if (ci.getReturnValue() == CameraType.THIRD_PERSON_FRONT) {
+            ci.setReturnValue(CameraType.FIRST_PERSON);
+        }
     }
 }

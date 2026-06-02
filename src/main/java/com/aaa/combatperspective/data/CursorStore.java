@@ -204,4 +204,53 @@ public class CursorStore {
     // =========================================================================
     public static boolean isHitBlock()                          { return hitBlock; }
 
+    // ===== 摄像机偏移（CameraMixin 读取，球坐标驱动） =====
+    private static double deltaCameraX;
+    private static double deltaCameraY = 6;
+    private static double deltaCameraZ = 6;
+
+    // 球坐标：绕玩家旋转的角度和距离（初值对齐 deltaY=6, deltaZ=6）
+    private static double cameraSphYaw;         // 0°=南(+Z)
+    private static double cameraSphPitch = 45;  // 45°=俯角，摄像头在上方
+    private static double cameraSphDist = 8.49; // √(6²+6²)
+
+    static {
+        updateCartesian();
+    }
+
+    /** 球坐标 → 笛卡尔 */
+    public static void updateCartesian() {
+        double yr = Math.toRadians(cameraSphYaw);
+        double pr = Math.toRadians(cameraSphPitch);
+        double cp = Math.cos(pr);
+        deltaCameraX = cameraSphDist * cp * Math.sin(yr);
+        deltaCameraY = cameraSphDist * Math.sin(pr);
+        deltaCameraZ = cameraSphDist * cp * Math.cos(yr);
+    }
+
+    public static double getCameraSphYaw()   { return cameraSphYaw; }
+    public static double getCameraSphPitch() { return cameraSphPitch; }
+    public static double getCameraSphDist()  { return cameraSphDist; }
+
+    public static void setCameraSphYaw(double v)   { cameraSphYaw = v; updateCartesian(); }
+    public static void setCameraSphPitch(double v) { cameraSphPitch = v; updateCartesian(); }
+    public static void setCameraSphDist(double v)  { cameraSphDist = Math.max(1, v); updateCartesian(); }
+
+    public static double getDeltaCameraX() { return deltaCameraX; }
+    public static double getDeltaCameraY() { return deltaCameraY; }
+    public static double getDeltaCameraZ() { return deltaCameraZ; }
+
+    /** 配置文件直写笛卡尔值，同时同步回球坐标 */
+    public static void setDeltaCameraX(double v) { deltaCameraX = v; syncSpherical(); }
+    public static void setDeltaCameraY(double v) { deltaCameraY = v; syncSpherical(); }
+    public static void setDeltaCameraZ(double v) { deltaCameraZ = v; syncSpherical(); }
+
+    /** 笛卡尔 → 球坐标 */
+    private static void syncSpherical() {
+        double hDist = Math.sqrt(deltaCameraX * deltaCameraX + deltaCameraZ * deltaCameraZ);
+        cameraSphDist = Math.sqrt(deltaCameraX * deltaCameraX + deltaCameraY * deltaCameraY + deltaCameraZ * deltaCameraZ);
+        cameraSphPitch = Math.toDegrees(Math.atan2(deltaCameraY, hDist));
+        cameraSphYaw   = Math.toDegrees(Math.atan2(deltaCameraX, deltaCameraZ));
+    }
+
 }

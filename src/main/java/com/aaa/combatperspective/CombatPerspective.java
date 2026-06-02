@@ -4,67 +4,20 @@
 // 包声明，声明当前类所在的包路径
 package com.aaa.combatperspective;
 
-// 导入创造模式标签页相关类
 import com.aaa.combatperspective.item.ModCreativeModeTabs;
-// 导入物品注册相关类
 import com.aaa.combatperspective.item.ModItems;
-
-// 导入日志系统，使用 slf4j 作为日志门面
 import org.slf4j.Logger;
-// 使用 Mojang 提供的 LogUtils 获取日志器
 import com.mojang.logging.LogUtils;
-
-// 导入 Minecraft 注册表，用于查询方块/物品等
-import net.minecraft.core.registries.BuiltInRegistries;
-// 导入注册表类型常量
-import net.minecraft.core.registries.Registries;
-// 导入聊天组件，用于 GUI 显示文本
-import net.minecraft.network.chat.Component;
-// 导入食物属性（目前未使用）
-import net.minecraft.world.food.FoodProperties;
-// 导入方块物品包装类
-import net.minecraft.world.item.BlockItem;
-// 导入创造模式标签页相关类
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-// 导入基础物品类
-import net.minecraft.world.item.Item;
-// 导入方块相关类
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-// 导入方块状态属性
-import net.minecraft.world.level.block.state.BlockBehaviour;
-// 导入材质颜色
-import net.minecraft.world.level.material.MapColor;
-
-// 导入 NeoForge 事件总线，用于事件监听和发布
 import net.neoforged.bus.api.IEventBus;
-// 导入事件订阅注解
 import net.neoforged.bus.api.SubscribeEvent;
-// 导入 Mod 注解，声明这是一个 NeoForge 模组
 import net.neoforged.fml.common.Mod;
-// 导入配置文件类型
 import net.neoforged.fml.config.ModConfig;
-// 导入模组容器，用于获取模组元数据
 import net.neoforged.fml.ModContainer;
-// 导入通用初始化事件
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-// 导入 NeoForge 事件总线
 import net.neoforged.neoforge.common.NeoForge;
-// 导入创造模式标签页构建事件
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
-// 导入服务器启动事件
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
-// 导入延迟块注册器
-import net.neoforged.neoforge.registries.DeferredBlock;
-// 导入延迟持有者
-import net.neoforged.neoforge.registries.DeferredHolder;
-// 导入延迟物品注册器
-import net.neoforged.neoforge.registries.DeferredItem;
-// 导入延迟注册器
-import net.neoforged.neoforge.registries.DeferredRegister;
-
-// 导入静态引用，自定义创造模式标签页的标签页实例
+import net.minecraft.world.item.CreativeModeTabs;
 import static com.aaa.combatperspective.item.ModCreativeModeTabs.CP_TAB;
 
 // =============================================================================
@@ -139,33 +92,7 @@ public class CombatPerspective {
     // param event 通用设置事件
     // =========================================================================
     private void commonSetup(FMLCommonSetupEvent event) {
-        // 输出日志，表示模组已加载
-        LOGGER.info("HELLO FROM COMMON SETUP");
-
-        // -------------------------------------------------------------------------
-        // 条件日志：检查配置中的 logDirtBlock 选项
-        // getAsBoolean() 获取配置文件中定义的布尔值
-        // 如果玩家启用了这个选项，则打印泥土方块的注册键（资源位置）
-        // -------------------------------------------------------------------------
-        if (Config.LOG_DIRT_BLOCK.getAsBoolean()) {
-            // BuiltInRegistries.BLOCK.getKey(Blocks.DIRT) 获取泥土方块的资源键
-            // 如 minecraft:dirt
-            LOGGER.info("DIRT BLOCK >> {}", BuiltInRegistries.BLOCK.getKey(Blocks.DIRT));
-        }
-
-        // -------------------------------------------------------------------------
-        // 打印魔法数字配置
-        // 使用字符串模板，{} 会被实际值替换
-        // MAGIC_NUMBER_INTRODUCTION 是前缀文本，MAGIC_NUMBER 是实际数值
-        // -------------------------------------------------------------------------
-        LOGGER.info("{}{}", Config.MAGIC_NUMBER_INTRODUCTION.get(), Config.MAGIC_NUMBER.getAsInt());
-
-        // -------------------------------------------------------------------------
-        // 遍历物品字符串列表并打印
-        // ITEM_STRINGS 是一个列表配置项，可以配置多个物品
-        // forEach 遍历列表，每个 item 都是一个物品的资源键字符串
-        // -------------------------------------------------------------------------
-        Config.ITEM_STRINGS.get().forEach((item) -> LOGGER.info("ITEM >> {}", item));
+        LOGGER.info("CombatPerspective 加载完成");
     }
 
     // =========================================================================

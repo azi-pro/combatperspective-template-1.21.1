@@ -1,12 +1,7 @@
 {
-  "item.combatperspective.longsword": "longsword",
+  "item.combatperspective.weapon.iron_longsword": "Iron Longsword",
+  "itemGroup.combatperspective_tab": "Combat Perspective",
 
-
-  "combatperspective.configuration.title": "CombatPerspective Configs",
-  "combatperspective.configuration.section.combatperspective.common.toml": "CombatPerspective Configs",
-  "combatperspective.configuration.section.combatperspective.common.toml.title": "CombatPerspective Configs",
-  "combatperspective.configuration.items": "Item List",
-  "combatperspective.configuration.logDirtBlock": "Log Dirt Block",
-  "combatperspective.configuration.magicNumberIntroduction": "Magic Number Text",
-  "combatperspective.configuration.magicNumber": "Magic Number"
+  "key.categories.combatperspective": "Combat Perspective",
+  "key.combatperspective.adjust_camera": "Adjust Camera"
 }

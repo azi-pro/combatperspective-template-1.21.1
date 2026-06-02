@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LocalPlayerMixin {
 
     /** 战斗视角守卫 */
-    private static boolean isThirdPersonback(Minecraft mc) {
+    private static boolean isthirdPersonback(Minecraft mc) {
         return !mc.options.getCameraType().isFirstPerson()
                 && !mc.options.getCameraType().isMirrored()
                 && mc.screen == null;
@@ -29,7 +29,7 @@ public abstract class LocalPlayerMixin {
     @Inject(method = "tick", at = @At("HEAD"))
     private void turnThenMove(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
-        if (!isThirdPersonback(mc)) return;
+        if (!isthirdPersonback(mc)) return;
         LocalPlayer self = (LocalPlayer) (Object) this;
         self.input.left = false;
         self.input.right = false;
@@ -39,7 +39,7 @@ public abstract class LocalPlayerMixin {
     @Inject(method = "tick", at = @At("TAIL"))
     private void mouseLook(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
-        if (!isThirdPersonback(mc)) return;
+        if (!isthirdPersonback(mc)) return;
 
         LocalPlayer self = (LocalPlayer) (Object) this;
         Camera cam = mc.gameRenderer.getMainCamera();
@@ -103,7 +103,7 @@ public abstract class LocalPlayerMixin {
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void overrideSprint(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
-        if (!isThirdPersonback(mc)) return;
+        if (!isthirdPersonback(mc)) return;
 
         LocalPlayer self = (LocalPlayer) (Object) this;
 

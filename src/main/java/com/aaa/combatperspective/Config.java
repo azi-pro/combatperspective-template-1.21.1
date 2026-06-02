@@ -4,6 +4,7 @@
 // 包声明
 package com.aaa.combatperspective;
 
+import com.aaa.combatperspective.data.CursorStore;
 // 导入 Java 列表接口
 import java.util.List;
 
@@ -106,25 +107,20 @@ public class Config {
     // 配置项：相机距离玩家
     // 第三人称视角下相机与玩家之间的距离
     // =========================================================================
-    public static final ModConfigSpec.DoubleValue CAMERA_DISTANCE = BUILDER
-            .comment("相机距离玩家") // 说明
-            .defineInRange("cameraDistance", 2.0D, 0.0D, 10.0D); // 默认 2 格，范围 0-10
+    // deltaCameraZ：摄像机在玩家后方（Z轴）的距离
+    public static final ModConfigSpec.DoubleValue CAMERA_DELTA_Z = BUILDER
+            .comment("摄像机在玩家后方的距离 (deltaZ)")
+            .defineInRange("cameraDeltaZ", 6.0D, 0.0D, 128.0D);
 
-    // =========================================================================
-    // 配置项：相机高度
-    // 第三人称视角下相机在玩家上方（或下方，负值）的高度
-    // =========================================================================
-    public static final ModConfigSpec.DoubleValue CAMERA_HEIGHT = BUILDER
-            .comment("相机高度") // 说明
-            .defineInRange("cameraHeight", 0.7D, -5.0D, 5.0D); // 默认 0.7 格，范围 -5 到 5
+    // deltaCameraY：摄像机在玩家上方的高度
+    public static final ModConfigSpec.DoubleValue CAMERA_DELTA_Y = BUILDER
+            .comment("摄像机在玩家上方的高度 (deltaY)")
+            .defineInRange("cameraDeltaY", 6.0D, 0.0D, 128.0D);
 
-    // =========================================================================
-    // 配置项：相机左右偏移
-    // 第三人称视角下相机在玩家左侧（或右侧，负值）的偏移量
-    // =========================================================================
-    public static final ModConfigSpec.DoubleValue CAMERA_SIDE = BUILDER
-            .comment("相机左右偏移") // 说明
-            .defineInRange("cameraSide", 0.0D, -5.0D, 5.0D); // 默认居中，范围 -5 到 5
+    // deltaCameraX：摄像机在玩家右方的偏移（负值=左方）
+    public static final ModConfigSpec.DoubleValue CAMERA_DELTA_X = BUILDER
+            .comment("摄像机左右偏移 (deltaX)")
+            .defineInRange("cameraDeltaX", 0.0D, -10.0D, 128.0D);
 
     // =========================================================================
     // 构建最终的配置规格
@@ -159,8 +155,18 @@ public class Config {
         // =====================================================================
         @SubscribeEvent
         static void onLoad(final ModConfigEvent.Loading configEvent) {
-            // 目前为空，可以在这里添加配置加载时的处理逻辑
-            // 例如：验证配置值的合理性、初始化依赖配置的功能等
+            syncToCursorStore();
+        }
+
+        @SubscribeEvent
+        static void onReload(final ModConfigEvent.Reloading configEvent) {
+            syncToCursorStore();
+        }
+
+        private static void syncToCursorStore() {
+            CursorStore.setDeltaCameraX(CAMERA_DELTA_X.get());
+            CursorStore.setDeltaCameraY(CAMERA_DELTA_Y.get());
+            CursorStore.setDeltaCameraZ(CAMERA_DELTA_Z.get());
         }
     }
 }

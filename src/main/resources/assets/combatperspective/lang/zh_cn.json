@@ -1,13 +1,7 @@
 {
   "item.combatperspective.weapon.iron_longsword": "铁长刀",
-  "item.combatperspective.example_item": "示例物品",
-  "itemGroup.combatperspective_tab": "来源于模组: \"战斗视角\"",
+  "itemGroup.combatperspective_tab": "战斗视角",
 
-  "combatperspective.configuration.title": "战斗视角模组配置",
-  "combatperspective.configuration.section.combatperspective.common.toml": "战斗视角模组设置",
-  "combatperspective.configuration.section.combatperspective.common.toml.title": "战斗视角模组配置",
-  "combatperspective.configuration.items": "物品列表",
-  "combatperspective.configuration.logDirtBlock": "输出泥土方块信息",
-  "combatperspective.configuration.magicNumberIntroduction": "魔法数字说明文字",
-  "combatperspective.configuration.magicNumber": "魔法数字"
+  "key.categories.combatperspective": "战斗视角",
+  "key.combatperspective.adjust_camera": "调整摄像机"
 }

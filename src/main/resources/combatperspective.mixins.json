@@ -3,7 +3,6 @@
   "package": "com.aaa.combatperspective.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "CameraAccessor",
     "CameraInvoker",
     "CameraMixin",
     "CameraTypeMixin",

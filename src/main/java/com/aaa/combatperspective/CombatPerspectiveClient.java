@@ -126,8 +126,12 @@ public class CombatPerspectiveClient {
     // =========================================================================
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
-        // 输出日志，表示客户端模组加载成功
         CombatPerspective.LOGGER.info("客户端加载成功");
+    }
+
+    @SubscribeEvent
+    static void registerKeys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        event.register(ADJUST_CAMERA_KEY);
     }
 
     // =========================================================================
@@ -135,14 +139,16 @@ public class CombatPerspectiveClient {
     // volatile 关键字：保证多线程间的可见性，防止缓存问题
     // 用于存储当前的视野角度值
     // =========================================================================
+    // ===== 自定义按键：按住调整摄像机 =====
+    public static final net.minecraft.client.KeyMapping ADJUST_CAMERA_KEY = new net.minecraft.client.KeyMapping(
+            "key.combatperspective.adjust_camera",
+            org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT,
+            "key.categories.combatperspective"
+    );
+
     private static volatile float currentFov = 70.0F;
 
-    // =========================================================================
-    // 初始化方法：手动注册类到事件总线
-    // 用于确保静态方法可以响应事件
-    // =========================================================================
     public static void init() {
-        // 将本类注册到 NeoForge 全局事件总线
         NeoForge.EVENT_BUS.register(CombatPerspectiveClient.class);
     }
 
