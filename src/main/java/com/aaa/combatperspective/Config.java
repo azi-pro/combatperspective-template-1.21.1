@@ -42,66 +42,9 @@ public class Config {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
     // =========================================================================
-    // 原有配置项：是否在通用设置时打印泥土方块信息
-    // ModConfigSpec.BooleanValue：布尔类型配置
-    // .comment()：配置的注释说明（游戏中可以看到）
-    // .define()：定义配置项，参数为默认值
-    // =========================================================================
-    public static final ModConfigSpec.BooleanValue LOG_DIRT_BLOCK = BUILDER
-            .comment("Whether to log the dirt block on common setup") // 配置项的说明
-            .define("logDirtBlock", true); // 默认值为 true
-
-    // =========================================================================
-    // 原有配置项：魔法数字
-    // ModConfigSpec.IntValue：整数类型配置
-    // .defineInRange()：定义带范围的整数，参数为 名称、默认值、最小值、最大值
-    // =========================================================================
-    public static final ModConfigSpec.IntValue MAGIC_NUMBER = BUILDER
-            .comment("A magic number") // 配置项的说明
-            .defineInRange("magicNumber", 42, 0, Integer.MAX_VALUE); // 范围 0 到 最大整数
-
-    // =========================================================================
-    // 原有配置项：魔法数字的介绍文本
-    // ModConfigSpec.ConfigValue<String>：字符串类型配置
-    // =========================================================================
-    public static final ModConfigSpec.ConfigValue<String> MAGIC_NUMBER_INTRODUCTION = BUILDER
-            .comment("What you want the introduction message to be for the magic number") // 说明
-            .define("magicNumberIntroduction", "The magic number is... "); // 默认文本
-
-    // =========================================================================
-    // 原有配置项：物品字符串列表
-    // ModConfigSpec.ConfigValue<List<? extends String>>：字符串列表配置
-    // .defineListAllowEmpty()：定义允许为空的列表
-    //   参数1：配置键名
-    //   参数2：默认值（空的字符串列表）
-    //   参数3：空值工厂（返回空字符串）
-    //   参数4：验证器（检查每个元素是否为有效物品名）
-    // =========================================================================
-    public static final ModConfigSpec.ConfigValue<List<? extends String>> ITEM_STRINGS = BUILDER
-            .comment("A list of items to log on common setup.") // 说明
-            .defineListAllowEmpty("items", List.of("minecraft:iron_ingot"), () -> "", Config::validateItemName);
-
-    // =========================================================================
     // ===================== 战斗视角配置 =====================
     // 以下是本模组的核心配置项
     // =========================================================================
-
-    // =========================================================================
-    // 配置项：是否启用触及相机
-    // 触及相机功能：摄像机朝向最远触及点
-    // =========================================================================
-    public static final ModConfigSpec.BooleanValue ENABLE_REACH_CAMERA = BUILDER
-            .comment("启用特殊视角：摄像机朝向最远触及点") // 中文说明
-            .define("enableReachCamera", false); // 默认关闭
-
-    // =========================================================================
-    // 配置项：最远触及距离
-    // 定义玩家能够交互的最大距离（方块/实体）
-    // DoubleValue：双精度浮点数配置
-    // =========================================================================
-    public static final ModConfigSpec.DoubleValue REACH_DISTANCE = BUILDER
-            .comment("最远触及距离") // 说明
-            .defineInRange("reachDistance", 6.0D, 1.0D, 20.0D); // 默认 6 格，范围 1-20
 
     // =========================================================================
     // 配置项：相机距离玩家
@@ -154,12 +97,12 @@ public class Config {
         // param configEvent 配置加载事件
         // =====================================================================
         @SubscribeEvent
-        static void onLoad(final ModConfigEvent.Loading configEvent) {
+        static void onLoad(final ModConfigEvent.Loading event) {
             syncToCursorStore();
         }
 
         @SubscribeEvent
-        static void onReload(final ModConfigEvent.Reloading configEvent) {
+        static void onReload(final ModConfigEvent.Reloading event) {
             syncToCursorStore();
         }
 

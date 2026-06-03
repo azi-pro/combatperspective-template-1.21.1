@@ -22,14 +22,12 @@ import net.minecraft.world.item.ItemStack;
 // 导入事件总线接口
 import net.neoforged.bus.api.IEventBus;
 
+import net.neoforged.neoforge.registries.DeferredHolder;
 // 导入延迟持有者
 import net.neoforged.neoforge.registries.DeferredItem;
 
 // 导入延迟注册器
 import net.neoforged.neoforge.registries.DeferredRegister;
-
-// 导入函数式接口
-import java.util.function.Supplier;
 
 // =============================================================================
 // 创造模式标签页注册类
@@ -52,7 +50,7 @@ public class ModCreativeModeTabs {
     // "combatperspective_tab"：标签页的资源路径
     // () -> CreativeModeTab.builder()：标签页工厂，使用构建器模式
     // =========================================================================
-    public static final Supplier<CreativeModeTab> CP_TAB =
+    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> CP_TAB =
             CREATIVE_MODE_TABS.register("combatperspective_tab", () -> CreativeModeTab.builder()
                     // -----------------------------------------------------------------
                     // 设置标签页图标
@@ -78,7 +76,7 @@ public class ModCreativeModeTabs {
                     // accept()：将物品添加到标签页
                     // -----------------------------------------------------------------
                     .displayItems((parameters, output) -> {
-                        output.accept(ModItems.Iron_LongSword);
+                        output.accept(ModItems.Iron_LongSword.get());
                     }).build()); // build() 完成构建
 
     // =========================================================================

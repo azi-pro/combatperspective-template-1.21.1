@@ -99,10 +99,11 @@ public class MouseHandlerMixin {
         cpLastY = ypos;
 
         double sensitivity = 0.2;
-        CursorStore.setCameraSphYaw(CursorStore.getCameraSphYaw() - dx * sensitivity);
-        CursorStore.setCameraSphPitch(
+        if (dx != 0) CursorStore.setCameraSphYaw(CursorStore.getCameraSphYaw() - dx * sensitivity);
+        if (dy != 0) CursorStore.setCameraSphPitch(
                 Mth.clamp(CursorStore.getCameraSphPitch() - dy * sensitivity, -89, 89)
         );
+        if (dx != 0 || dy != 0) CursorStore.syncDeltaToConfig();
         ci.cancel();
     }
 
@@ -117,6 +118,7 @@ public class MouseHandlerMixin {
 
         double dist = CursorStore.getCameraSphDist() - scrollY * 0.2;
         CursorStore.setCameraSphDist(dist);
+        CursorStore.syncDeltaToConfig();
         ci.cancel();
     }
 

@@ -210,7 +210,7 @@ public class CombatPerspectiveClient {
 
         // 获取 Minecraft 实例和玩家引用
         Minecraft mc = Minecraft.getInstance();
-        assert mc.player != null;
+        if (mc.player == null) return;
 
         // 获取主相机，用于计算相对坐标
         Camera cam = mc.gameRenderer.getMainCamera();
@@ -225,31 +225,6 @@ public class CombatPerspectiveClient {
         // -------------------------------------------------------------------------
         var poseStack = event.getPoseStack();
         var bufferSource = mc.renderBuffers().bufferSource();
-
-        // -------------------------------------------------------------------------
-        // ---- 第一部分：绘制白色十字标记 ----
-        // 这个十字表示摄像机射线与命中点的位置
-        // 十字永远面向摄像头方向
-        // -------------------------------------------------------------------------
-
-        // 禁用深度测试，使十字始终可见（不被方块遮挡）
-        RenderSystem.disableDepthTest();
-
-        // 保存当前坐标变换状态
-        poseStack.pushPose();
-
-        // 将坐标原点移动到命中点位置（相对于相机）
-        // 这样十字会绘制在命中点位置
-        poseStack.translate(camHit.x - camPos.x, camHit.y - camPos.y, camHit.z - camPos.z);
-
-        // 获取当前变换矩阵
-        Matrix4f mat = poseStack.last().pose();
-
-        // 绘制十字：0xFFFFFFFF = 白色（完全不透明）
-        renderCross(bufferSource, mat, camPos, camHit, 0xFFFFFFFF);
-
-        // 恢复坐标变换状态
-        poseStack.popPose();
 
         // -------------------------------------------------------------------------
         // ---- 第二部分：绘制玩家视线射线命中框 ----

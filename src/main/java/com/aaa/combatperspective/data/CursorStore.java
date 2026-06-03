@@ -228,6 +228,13 @@ public class CursorStore {
         deltaCameraZ = cameraSphDist * cp * Math.cos(yr);
     }
 
+    /** 把当前笛卡尔值写回配置页面（鼠标/滚轮调整摄像机后调用） */
+    public static void syncDeltaToConfig() {
+        com.aaa.combatperspective.Config.CAMERA_DELTA_X.set(deltaCameraX);
+        com.aaa.combatperspective.Config.CAMERA_DELTA_Y.set(deltaCameraY);
+        com.aaa.combatperspective.Config.CAMERA_DELTA_Z.set(deltaCameraZ);
+    }
+
     public static double getCameraSphYaw()   { return cameraSphYaw; }
     public static double getCameraSphPitch() { return cameraSphPitch; }
     public static double getCameraSphDist()  { return cameraSphDist; }
@@ -245,7 +252,7 @@ public class CursorStore {
     public static void setDeltaCameraY(double v) { deltaCameraY = v; syncSpherical(); }
     public static void setDeltaCameraZ(double v) { deltaCameraZ = v; syncSpherical(); }
 
-    /** 笛卡尔 → 球坐标 */
+    /** 笛卡尔 → 球坐标（由配置写入，不触发回调） */
     private static void syncSpherical() {
         double hDist = Math.sqrt(deltaCameraX * deltaCameraX + deltaCameraZ * deltaCameraZ);
         cameraSphDist = Math.sqrt(deltaCameraX * deltaCameraX + deltaCameraY * deltaCameraY + deltaCameraZ * deltaCameraZ);

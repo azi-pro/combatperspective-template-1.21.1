@@ -18,7 +18,6 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.minecraft.world.item.CreativeModeTabs;
-import static com.aaa.combatperspective.item.ModCreativeModeTabs.CP_TAB;
 
 // =============================================================================
 // 模组主类声明
@@ -102,22 +101,8 @@ public class CombatPerspective {
     // event.accept() 将物品添加到该标签页的物品列表中
     // =========================================================================
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
-        // -------------------------------------------------------------------------
-        // 如果当前构建的是战斗用品标签页
-        // CreativeModeTabs.COMBAT 是原版游戏的战斗物品栏
-        // 则接受（添加）本模组的铁制长剑
-        // -------------------------------------------------------------------------
         if (event.getTabKey() == CreativeModeTabs.COMBAT) {
-            event.accept(ModItems.Iron_LongSword);
-        }
-
-        // -------------------------------------------------------------------------
-        // 如果当前构建的是本模组的自定义标签页
-        // CP_TAB 是我们在 ModCreativeModeTabs 中定义的自定义标签页
-        // 则同样接受铁制长剑，使其在两个地方都能找到
-        // -------------------------------------------------------------------------
-        if (event.getTabKey() == CP_TAB) {
-            event.accept(ModItems.Iron_LongSword);
+            event.accept(ModItems.Iron_LongSword.get());
         }
     }
 
