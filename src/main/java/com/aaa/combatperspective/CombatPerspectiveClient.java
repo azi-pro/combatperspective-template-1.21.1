@@ -371,7 +371,9 @@ public class CombatPerspectiveClient {
         BlockState state = mc.level.getBlockState(headPos);
 
         // 跳过空气
-        if (state.isAir()) return;
+        if (state.isAir()) {
+            return;
+        }
 
         Camera cam = mc.gameRenderer.getMainCamera();
         var poseStack = event.getPoseStack();
@@ -382,11 +384,16 @@ public class CombatPerspectiveClient {
 
         Matrix4f mat = poseStack.last().pose();
 
+        // 设置混合模式
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShaderColor(1f, 1f, 1f, 0.5f);
+        
         // 使用半透明渲染类型
         VertexConsumer buf = bufferSource.getBuffer(RenderType.translucent());
 
-        // 15% 不透明度
-        int alpha = (int)(255 * 0.15f);
+        // 50% 不透明度用于测试
+        int alpha = 128;
         int color = (alpha << 24) | 0xFFFFFF;
 
         // 绘制 6 个面
