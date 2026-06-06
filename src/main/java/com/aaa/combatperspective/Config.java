@@ -65,8 +65,21 @@ public class Config {
             .comment("摄像机左右偏移 (deltaX)")
             .defineInRange("cameraDeltaX", 0.0D, -10.0D, 128.0D);
 
-    // =========================================================================
-    // 构建最终的配置规格
+    // 是否启用边缘旋转
+    public static final ModConfigSpec.BooleanValue EDGE_ROTATE_ENABLED = BUILDER
+            .comment("鼠标移到屏幕边缘时自动旋转摄像机")
+            .define("edgeRotateEnabled", true);
+
+    // 水平旋转速度（度/秒）
+    public static final ModConfigSpec.DoubleValue CAMERA_YAW_SPEED = BUILDER
+            .comment("摄像机水平旋转速度 (度/秒)")
+            .defineInRange("cameraYawSpeed", 2.0D, 0.0D, 20.0D);
+
+    // 竖直旋转速度（度/秒）
+    public static final ModConfigSpec.DoubleValue CAMERA_PITCH_SPEED = BUILDER
+            .comment("摄像机竖直旋转速度 (度/秒)")
+            .defineInRange("cameraPitchSpeed", 2.0D, 0.0D, 20.0D);
+
     // build() 方法会验证所有配置项并生成可使用的 SPEC
     // =========================================================================
     static final ModConfigSpec SPEC = BUILDER.build();
@@ -110,6 +123,9 @@ public class Config {
             CursorStore.setDeltaCameraX(CAMERA_DELTA_X.get());
             CursorStore.setDeltaCameraY(CAMERA_DELTA_Y.get());
             CursorStore.setDeltaCameraZ(CAMERA_DELTA_Z.get());
+            CursorStore.setEdgeRotateEnabled(EDGE_ROTATE_ENABLED.get());
+            CursorStore.setYawSpeed(CAMERA_YAW_SPEED.get());
+            CursorStore.setPitchSpeed(CAMERA_PITCH_SPEED.get());
         }
     }
 }

@@ -209,9 +209,21 @@ public class CursorStore {
     private static double deltaCameraY = 6;
     private static double deltaCameraZ = 6;
 
+    // 边缘旋转配置
+    private static boolean edgeRotateEnabled = true;
+    private static double yawSpeed = 2.0;
+    private static double pitchSpeed = 2.0;
+
+    public static boolean isEdgeRotateEnabled() { return edgeRotateEnabled; }
+    public static void setEdgeRotateEnabled(boolean v) { edgeRotateEnabled = v; }
+    public static double getYawSpeed()   { return yawSpeed; }
+    public static double getPitchSpeed() { return pitchSpeed; }
+    public static void setYawSpeed(double v)   { yawSpeed = v; }
+    public static void setPitchSpeed(double v) { pitchSpeed = v; }
+
     // 球坐标：绕玩家旋转的角度和距离（初值对齐 deltaY=6, deltaZ=6）
     private static double cameraSphYaw;         // 0°=南(+Z)
-    private static double cameraSphPitch = 45;  // 45°=俯角，摄像头在上方
+    private static double cameraSphPitch = 45;  // 45°=俯角
     private static double cameraSphDist = 8.49; // √(6²+6²)
 
     static {
@@ -228,7 +240,7 @@ public class CursorStore {
         deltaCameraZ = cameraSphDist * cp * Math.cos(yr);
     }
 
-    /** 把当前笛卡尔值写回配置页面（鼠标/滚轮调整摄像机后调用） */
+    /** 把当前值写回配置页面 */
     public static void syncDeltaToConfig() {
         com.aaa.combatperspective.Config.CAMERA_DELTA_X.set(deltaCameraX);
         com.aaa.combatperspective.Config.CAMERA_DELTA_Y.set(deltaCameraY);

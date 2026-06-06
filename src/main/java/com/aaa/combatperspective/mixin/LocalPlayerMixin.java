@@ -25,7 +25,7 @@ public abstract class LocalPlayerMixin {
                 && mc.screen == null;
     }
 
-    /** 禁用侧移 */
+    /** 禁用侧移 + 边缘旋转 */
     @Inject(method = "tick", at = @At("HEAD"))
     private void turnThenMove(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
@@ -33,6 +33,49 @@ public abstract class LocalPlayerMixin {
         LocalPlayer self = (LocalPlayer) (Object) this;
         self.input.left = false;
         self.input.right = false;
+        edgeScroll(mc);
+    }
+
+    /** 鼠标在屏幕边缘 10% → 自动旋转摄像机，越靠边越快 */
+    private static void edgeScroll(Minecraft mc) {
+        if (!CursorStore.isEdgeRotateEnabled()) return;
+
+        double mx = mc.mouseHandler.xpos();
+        double my = mc.mouseHandler.ypos();
+        int w = mc.getWindow().getWidth();
+        int h = mc.getWindow().getHeight();
+
+        double marginPx = w * 0.10; // 10% 边缘像素宽度（取宽度为准）
+
+        double yawBase   = CursorStore.getYawSpeed()   / 20; // 度/tick
+        double pitchBase = CursorStore.getPitchSpeed() / 20;
+
+        // 左边缘：越靠近左边越快
+        if (mx < marginPx) {
+            int zone = (int)((1 - mx / marginPx) * 5); // 0~4
+            double mult = Math.pow(2, zone);
+            CursorStore.setCameraSphYaw(CursorStore.getCameraSphYaw() + yawBase * mult);
+        }
+        // 右边缘
+        if (mx > w - marginPx) {
+            int zone = (int)(((mx - (w - marginPx)) / marginPx) * 5);
+            double mult = Math.pow(2, zone);
+            CursorStore.setCameraSphYaw(CursorStore.getCameraSphYaw() - yawBase * mult);
+        }
+        // 上边缘 → 摄像头降低（pitch 减小）
+        if (my < marginPx) {
+            int zone = (int)((1 - my / marginPx) * 5);
+            double mult = Math.pow(2, zone);
+            CursorStore.setCameraSphPitch(
+                    Mth.clamp(CursorStore.getCameraSphPitch() - pitchBase * mult, -89, 89));
+        }
+        // 下边缘 → 摄像头升高（pitch 增大）
+        if (my > h - marginPx) {
+            int zone = (int)(((my - (h - marginPx)) / marginPx) * 5);
+            double mult = Math.pow(2, zone);
+            CursorStore.setCameraSphPitch(
+                    Mth.clamp(CursorStore.getCameraSphPitch() + pitchBase * mult, -89, 89));
+        }
     }
 
     /** 鼠标视觉：鼠标位置 → 世界射线 → 玩家看向交点 */
