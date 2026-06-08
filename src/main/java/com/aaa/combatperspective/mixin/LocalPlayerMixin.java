@@ -164,8 +164,10 @@ public abstract class LocalPlayerMixin {
                         ? ((net.minecraft.world.phys.BlockHitResult) blockHit).getBlockPos() : null,
                 isBlock && blockDist < entityDist);
 
-        // 7. 玩家看向目标
-        self.lookAt(EntityAnchorArgument.Anchor.EYES, target);
+        // 7. 玩家看向目标（但拉弓时不强制看向，避免限制视角）
+        if (!self.isUsingItem()) {
+            self.lookAt(EntityAnchorArgument.Anchor.EYES, target);
+        }
     }
 
     /**

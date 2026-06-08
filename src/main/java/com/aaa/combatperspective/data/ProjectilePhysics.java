@@ -243,24 +243,28 @@ public class ProjectilePhysics {
         // ===============================================================
         // ===============================================================
         // Minecraft 蓄力机制：
-        // - getUseItemRemainingTicks() 从 72000 开始递减
-        // - 弓蓄力 20 ticks (1秒) 即可达到最大威力
-        // - 所以蓄力比例 = 已使用时间 / 20
+        // - getUseItemRemainingTicks() 从物品最大使用时间递减
+        // - 弓的最大使用时间是 72000 ticks，但蓄力限制在约 20 ticks
+        // - remaining 越小，蓄力越满
         // ===============================================================
         final int MAX_CHARGE_TICKS = 20;
         
         // 剩余时间 (从 72000 递减)
         int remaining = player.getUseItemRemainingTicks();
         
-        // 已蓄力时间 = 72000 - remaining
-        // 但限制在 MAX_CHARGE_TICKS 范围内
-        int chargeProgress = Math.min(MAX_CHARGE_TICKS, 72000 - remaining);
+        // 蓄力时间 = (最大蓄力时间) - remaining
+        // 由于弓的最大使用时间是 72000，而满蓄力是 20 ticks
+        // 所以已蓄力时间 = Math.min(20, 72000 - remaining)
+        int chargeTicks = 72000 - remaining;
         
-        // 已使用时间
-        int usedTime = chargeProgress;
+        // 限制最大蓄力时间为 20 ticks
+        chargeTicks = Math.min(chargeTicks, MAX_CHARGE_TICKS);
+        
+        // 确保不为负数
+        if (chargeTicks < 0) chargeTicks = 0;
         
         // 蓄力比例 (0.0 - 1.0)
-        float chargeRatio = (float) usedTime / MAX_CHARGE_TICKS;
+        float chargeRatio = (float) chargeTicks / MAX_CHARGE_TICKS;
         
         // ===============================================================
         // Minecraft 非线性蓄力公式
