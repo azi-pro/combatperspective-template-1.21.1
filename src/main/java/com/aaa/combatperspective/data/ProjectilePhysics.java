@@ -216,7 +216,7 @@ public class ProjectilePhysics {
     
     /**
      * 根据弓的蓄力计算速度
-     * Minecraft 1.21 弓箭蓄力公式
+     * Minecraft 1.21 弓箭蓄力公式（非线性）
      */
     public static float calculateBowPower(LocalPlayer player) {
         if (player == null) return 0.0f;
@@ -242,12 +242,24 @@ public class ProjectilePhysics {
             return 0.0f;
         }
         
-        // Minecraft 弓蓄力时间最多约 1.0 秒 (20 ticks)
-        // 但可以用更长蓄力，这里限制在 1.0 秒
-        float maxPowerTime = 20.0f;
+        // Minecraft 弓最大蓄力时间约 1.0 秒 (20 ticks)
+        float maxChargeTime = 20.0f;
         
-        // 计算蓄力比例 (0.0 - 1.0)
-        float power = Math.min(1.0f, useTime / maxPowerTime);
+        // 蓄力比例 (0.0 - 1.0)
+        float chargeRatio = Math.min(1.0f, useTime / maxChargeTime);
+        
+        // ===============================================================
+        // Minecraft 非线性蓄力公式
+        // 来源: net.minecraft.world.item.BowItem
+        // f = (f^2 + f*2) / 3
+        // 这使得初期蓄力更快，后期较慢
+        // ===============================================================
+        float power = (chargeRatio * chargeRatio + chargeRatio * 2.0f) / 3.0f;
+        
+        // 限制最大为 1.0
+        if (power > 1.0f) {
+            power = 1.0f;
+        }
         
         return power;
     }
