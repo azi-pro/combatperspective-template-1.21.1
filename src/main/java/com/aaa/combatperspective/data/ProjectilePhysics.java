@@ -21,17 +21,20 @@ public class ProjectilePhysics {
     // Minecraft 1.21 弓箭真实物理参数
     // =========================================================================
     
-    /** 弓箭基础重力 (每 tick) - Minecraft Arrow 实体使用 */
-    private static final double ARROW_GRAVITY = 0.05;
-    
-    /** 弓箭拖曳系数 */
-    private static final double ARROW_DRAG = 0.99;
-    
     /** 满蓄力弓箭初速度 (格/tick) - Minecraft 1.21 Arrow 实际值 */
     private static final double ARROW_MAX_POWER = 3.0;
     
-    /** 每 tick 重力加速度（用于更精确模拟） */
-    private static final double GRAVITY_PER_TICK = 0.0075;
+    /** 重力加速度 (blocks per tick²) - Minecraft 默认 gravity */
+    private static final double GRAVITY = 0.08;
+    
+    /** 空气阻力系数 - 弓箭飞行时会逐渐减速 */
+    private static final double ARROW_DRAG = 0.998;
+    
+    /** 最大飞行距离 (格) - 超过这个距离弓箭会停止 */
+    private static final double MAX_ARROW_DISTANCE = 120.0;
+    
+    /** 最小速度阈值 - 低于这个速度弓箭停止 */
+    private static final double MIN_VELOCITY = 0.01;
     
     /**
      * 计算投射物轨迹
@@ -58,8 +61,8 @@ public class ProjectilePhysics {
             case ARROW -> {
                 // 弓箭：使用 Minecraft 真实物理
                 maxPower = ARROW_MAX_POWER * bowPower;
-                gravity = GRAVITY_PER_TICK;
-                drag = 1.0; // 弓箭无拖曳
+                gravity = GRAVITY;
+                drag = ARROW_DRAG;
             }
             case TRIDENT -> {
                 // 三叉戟
@@ -158,9 +161,30 @@ public class ProjectilePhysics {
                 return points;
             }
             
-            // 检查距离限制
+            // 检查距离限制（使用更真实的限制）
+            double currentDist = Math.sqrt(
+                (x - eyePos.x) * (x - eyePos.x) +
+                (y - eyePos.y) * (y - eyePos.y) +
+                (z - eyePos.z) * (z - eyePos.z)
+            );
+            
+            // 弓箭有最大飞行距离限制
+            if (type == ProjectileStore.ProjectileType.ARROW && currentDist > MAX_ARROW_DISTANCE) {
+                ProjectileStore.update(null, null, points);
+                return points;
+            }
+            
+            // 通用最大距离
             if (eyePos.distanceTo(newPos) > maxDist) {
                 ProjectileStore.update(null, null, points);
+                return points;
+            }
+            
+            // 检查速度是否过低（弓箭停止）
+            double speed = Math.sqrt(vx * vx + vy * vy + vz * vz);
+            if (speed < MIN_VELOCITY && currentDist > 5.0) {
+                ProjectileStore.update(new Vec3(x, y, z), 
+                    new net.minecraft.core.BlockPos((int)x, (int)y, (int)z), points);
                 return points;
             }
             
