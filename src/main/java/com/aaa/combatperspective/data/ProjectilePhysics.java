@@ -95,10 +95,12 @@ public class ProjectilePhysics {
         double vy = lookVec.y * maxPower;
         double vz = lookVec.z * maxPower;
         
-        // 当前位置 = 眼睛位置
-        double x = eyePos.x;
-        double y = eyePos.y;
-        double z = eyePos.z;
+        // 弓箭发射位置：从眼睛向前偏移一点（约0.5格）
+        // 这样轨迹起点更接近实际弓箭位置
+        double launchOffset = 0.3;
+        double x = eyePos.x + lookVec.x * launchOffset;
+        double y = eyePos.y + lookVec.y * launchOffset;
+        double z = eyePos.z + lookVec.z * launchOffset;
         
         // 上一帧位置
         Vec3 lastPos = eyePos;
