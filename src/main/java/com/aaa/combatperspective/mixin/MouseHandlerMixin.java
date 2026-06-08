@@ -1,6 +1,6 @@
 package com.aaa.combatperspective.mixin;
 
-import com.aaa.combatperspective.data.CursorStore;
+import com.aaa.combatperspective.data.CameraStore;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
@@ -130,11 +130,11 @@ public class MouseHandlerMixin {
         cpLastY = ypos;
 
         double sensitivity = 0.2;
-        if (dx != 0) CursorStore.setCameraSphYaw(CursorStore.getCameraSphYaw() - dx * sensitivity);
-        if (dy != 0) CursorStore.setCameraSphPitch(
-                Mth.clamp(CursorStore.getCameraSphPitch() - dy * sensitivity, -89, 89)
+        if (dx != 0) CameraStore.setCameraSphYaw(CameraStore.getCameraSphYaw() - dx * sensitivity);
+        if (dy != 0) CameraStore.setCameraSphPitch(
+                Mth.clamp(CameraStore.getCameraSphPitch() - dy * sensitivity, -89, 89)
         );
-        if (dx != 0 || dy != 0) CursorStore.syncDeltaToConfig();
+        if (dx != 0 || dy != 0) CameraStore.syncDeltaToConfig();
         ci.cancel();
     }
 
@@ -147,9 +147,9 @@ public class MouseHandlerMixin {
         if (!isthirdPersonback(mc) || mc.screen != null) return;
         if (!isAdjustKeyHeld()) return;
 
-        double dist = CursorStore.getCameraSphDist() - scrollY * 0.2;
-        CursorStore.setCameraSphDist(dist);
-        CursorStore.syncDeltaToConfig();
+        double dist = CameraStore.getCameraSphDist() - scrollY * 0.2;
+        CameraStore.setCameraSphDist(dist);
+        CameraStore.syncDeltaToConfig();
         ci.cancel();
     }
 

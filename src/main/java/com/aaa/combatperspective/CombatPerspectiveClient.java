@@ -5,7 +5,7 @@
 package com.aaa.combatperspective;
 
 // 导入 CursorStore 数据存储类，用于在 Mixin 之间共享数据
-import com.aaa.combatperspective.data.CursorStore;
+import com.aaa.combatperspective.data.HitStore;
 
 // 导入 Blaze3D 渲染系统，用于控制深度测试等渲染状态
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -206,7 +206,7 @@ public class CombatPerspectiveClient {
         // 从 CursorStore 获取鼠标射线命中位置
         // 如果没有命中（为 null），则不绘制
         // -------------------------------------------------------------------------
-        Vec3 camHit = CursorStore.getHitPos();
+        Vec3 camHit = HitStore.getPos();
         if (camHit == null) return;
 
         // 获取 Minecraft 实例和玩家引用

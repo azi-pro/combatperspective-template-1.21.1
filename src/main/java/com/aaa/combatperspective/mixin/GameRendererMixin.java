@@ -1,6 +1,6 @@
 package com.aaa.combatperspective.mixin;
 
-import com.aaa.combatperspective.data.CursorStore;
+import com.aaa.combatperspective.data.CameraStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.GameRenderer;
@@ -24,7 +24,7 @@ public class GameRendererMixin {
     )
     private float removeSprintFromFov(AbstractClientPlayer player) {
         Minecraft mc = Minecraft.getInstance();
-        if (CursorStore.getFovMode() == 0) return player.getFieldOfViewModifier(); // 方案一
+        if (CameraStore.getFovMode() == 0) return player.getFieldOfViewModifier(); // 方案一
 
         boolean thirdPerson = mc.options != null
                 && !mc.options.getCameraType().isFirstPerson()

@@ -1,6 +1,6 @@
 package com.aaa.combatperspective.mixin;
 
-import com.aaa.combatperspective.data.CursorStore;
+import com.aaa.combatperspective.data.CameraStore;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
@@ -18,7 +18,7 @@ public class CameraMixin {
 
     @Inject(method = "setup", at = @At("HEAD"))
     private void resetCameraTarget(CallbackInfo ci) {
-        CursorStore.setCameraTarget(null);
+        CameraStore.setCameraTarget(null);
     }
 
     @Inject(method = "setup",
@@ -34,28 +34,29 @@ public class CameraMixin {
         Minecraft mc = Minecraft.getInstance();
 
         if (mc.options.getCameraType().isFirstPerson()) {
-            CursorStore.setCameraTarget(null);
+            CameraStore.setCameraTarget(null);
             return;
         }
 
         if (!(entity instanceof Player player)) {
-            CursorStore.setCameraTarget(null);
+            CameraStore.setCameraTarget(null);
             return;
         }
 
         Camera camera = (Camera) (Object) this;
 
         Vec3 eye = player.getEyePosition(partialTick);
-        double dx = CursorStore.getDeltaCameraX();
-        double dy = CursorStore.getDeltaCameraY();
-        double dz = CursorStore.getDeltaCameraZ();
+        double dx = CameraStore.getDeltaCameraX();
+        double dy = CameraStore.getDeltaCameraY();
+        double dz = CameraStore.getDeltaCameraZ();
 
         double len = Math.sqrt(dx * dx + dy * dy + dz * dz);
         float yaw   = (float) Math.toDegrees(Math.atan2(dx, -dz));
         float pitch = (float) Math.toDegrees(Math.asin(dy / len));
 
-        CursorStore.setCameraYaw(yaw);
-        CursorStore.setCameraTarget(entity);
+        CameraStore.setCameraYaw(yaw);
+        CameraStore.setCameraPitch(pitch);
+        CameraStore.setCameraTarget(entity);
 
         ((CameraInvoker) camera).invokeSetPosition(new Vec3(eye.x + dx, eye.y + dy, eye.z + dz));
         ((CameraInvoker) camera).invokeSetRotation(yaw, pitch);

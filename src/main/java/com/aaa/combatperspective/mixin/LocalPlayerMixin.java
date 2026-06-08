@@ -1,7 +1,9 @@
 package com.aaa.combatperspective.mixin;
 
 import com.aaa.combatperspective.CombatPerspectiveClient;
-import com.aaa.combatperspective.data.CursorStore;
+import com.aaa.combatperspective.data.CameraStore;
+import com.aaa.combatperspective.data.EdgeScrollStore;
+import com.aaa.combatperspective.data.HitStore;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -38,44 +40,44 @@ public abstract class LocalPlayerMixin {
 
     /** 鼠标在屏幕边缘 10% → 自动旋转摄像机，越靠边越快 */
     private static void edgeScroll(Minecraft mc) {
-        if (!CursorStore.isEdgeRotateEnabled()) return;
+        if (!EdgeScrollStore.isEnabled()) return;
 
         double mx = mc.mouseHandler.xpos();
         double my = mc.mouseHandler.ypos();
         int w = mc.getWindow().getWidth();
         int h = mc.getWindow().getHeight();
 
-        double marginX = w * CursorStore.getEdgeMarginX();
-        double marginY = h * CursorStore.getEdgeMarginY();
+        double marginX = w * EdgeScrollStore.getMarginX();
+        double marginY = h * EdgeScrollStore.getMarginY();
 
-        double yawBase   = CursorStore.getYawSpeed()   / 20; // 度/tick
-        double pitchBase = CursorStore.getPitchSpeed() / 20;
+        double yawBase   = EdgeScrollStore.getYawSpeed()   / 20; // 度/tick
+        double pitchBase = EdgeScrollStore.getPitchSpeed() / 20;
 
         // 左边缘：越靠近左边越快
         if (mx < marginX) {
             int zone = (int)((1 - mx / marginX) * 5); // 0~4
             double mult = Math.pow(2, zone);
-            CursorStore.setCameraSphYaw(CursorStore.getCameraSphYaw() + yawBase * mult);
+            CameraStore.setCameraSphYaw(CameraStore.getCameraSphYaw() + yawBase * mult);
         }
         // 右边缘
         if (mx > w - marginX) {
             int zone = (int)(((mx - (w - marginX)) / marginX) * 5);
             double mult = Math.pow(2, zone);
-            CursorStore.setCameraSphYaw(CursorStore.getCameraSphYaw() - yawBase * mult);
+            CameraStore.setCameraSphYaw(CameraStore.getCameraSphYaw() - yawBase * mult);
         }
         // 上边缘 → 摄像头降低（pitch 减小）
         if (my < marginY) {
             int zone = (int)((1 - my / marginY) * 5);
             double mult = Math.pow(2, zone);
-            CursorStore.setCameraSphPitch(
-                    Mth.clamp(CursorStore.getCameraSphPitch() - pitchBase * mult, -89, 89));
+            CameraStore.setCameraSphPitch(
+                    Mth.clamp(CameraStore.getCameraSphPitch() - pitchBase * mult, -89, 89));
         }
         // 下边缘 → 摄像头升高（pitch 增大）
         if (my > h - marginY) {
             int zone = (int)(((my - (h - marginY)) / marginY) * 5);
             double mult = Math.pow(2, zone);
-            CursorStore.setCameraSphPitch(
-                    Mth.clamp(CursorStore.getCameraSphPitch() + pitchBase * mult, -89, 89));
+            CameraStore.setCameraSphPitch(
+                    Mth.clamp(CameraStore.getCameraSphPitch() + pitchBase * mult, -89, 89));
         }
     }
 
@@ -129,9 +131,11 @@ public abstract class LocalPlayerMixin {
         HitResult blockHit = self.level().clip(ctx);
         boolean isBlock = blockHit.getType() == HitResult.Type.BLOCK;
 
-        // 实体检测
+        // 实体检测（细线）
         net.minecraft.world.phys.AABB sweepBox =
-                self.getBoundingBox().expandTowards(dir.scale(256.0)).inflate(1.0);
+                new net.minecraft.world.phys.AABB(origin, origin)
+                        .expandTowards(dir.scale(256.0))
+                        .inflate(0.1);
         net.minecraft.world.phys.EntityHitResult entityHit =
                 net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
                         self.level(), self, origin, end, sweepBox,
@@ -145,7 +149,7 @@ public abstract class LocalPlayerMixin {
 
         Vec3 target;
         if (entityDist < blockDist && entityHit != null) {
-            target = entityHit.getEntity().getBoundingBox().getCenter();
+            target = entityHit.getEntity().getEyePosition();
         } else if (isBlock) {
             target = ((net.minecraft.world.phys.BlockHitResult) blockHit).getLocation();
         } else {
@@ -153,7 +157,7 @@ public abstract class LocalPlayerMixin {
         }
 
         // 导出命中信息供渲染使用
-        CursorStore.setHit(target,
+        HitStore.set(target,
                 isBlock && blockDist < entityDist
                         ? ((net.minecraft.world.phys.BlockHitResult) blockHit).getDirection() : null,
                 isBlock && blockDist < entityDist
@@ -196,7 +200,7 @@ public abstract class LocalPlayerMixin {
         // 按键 → 世界方向（与 EntityMixin 的 moveRelative 一致，都用 cameraYaw）
         float forwardImp = (w ? 1 : 0) + (s ? -1 : 0);
         float leftImp    = (a ? 1 : 0) + (d ? -1 : 0);
-        float yr = CursorStore.getCameraYaw() * (float) (Math.PI / 180.0);
+        float yr = CameraStore.getCameraYaw() * (float) (Math.PI / 180.0);
         double worldX = leftImp * Math.cos(yr) - forwardImp * Math.sin(yr);
         double worldZ = forwardImp * Math.cos(yr) + leftImp * Math.sin(yr);
 
@@ -211,7 +215,7 @@ public abstract class LocalPlayerMixin {
 
         boolean hasEnoughFood = self.isPassenger()
                 || (float) self.getFoodData().getFoodLevel() > 6.0F
-                || self.getAbilities().mayfly;
+                || self.mayFly();
 
         self.setSprinting(angle < 45 && hasEnoughFood && !self.isUsingItem());
     }

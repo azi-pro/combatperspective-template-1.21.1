@@ -1,6 +1,6 @@
 package com.aaa.combatperspective.mixin;
 
-import com.aaa.combatperspective.data.CursorStore;
+import com.aaa.combatperspective.data.CameraStore;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -23,9 +23,9 @@ public class EntityMixin {
     @Inject(method = "moveRelative", at = @At("HEAD"), cancellable = true)
     private void moveRelativeWithCameraYaw(float amount, Vec3 relative, CallbackInfo ci) {
         // 只对摄像机指向的实体生效，其他实体（僵尸、箭矢等）走原版
-        if (this != CursorStore.getCameraTarget()) return;
+        if (this != CameraStore.getCameraTarget()) return;
 
-        float yaw = CursorStore.getCameraYaw();
+        float yaw = CameraStore.getCameraYaw();
 
         // ===== 原版 getInputVector(relative, amount, facing) =====
         double lenSqr = relative.lengthSqr();
