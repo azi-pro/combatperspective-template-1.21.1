@@ -9,10 +9,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.BowItem;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -149,7 +151,7 @@ public abstract class LocalPlayerMixin {
 
         Vec3 target;
         if (entityDist < blockDist && entityHit != null) {
-            target = entityHit.getEntity().getEyePosition();
+            target = entityHit.getEntity().getBoundingBox().getCenter();
         } else if (isBlock) {
             target = ((net.minecraft.world.phys.BlockHitResult) blockHit).getLocation();
         } else {
@@ -164,16 +166,74 @@ public abstract class LocalPlayerMixin {
                         ? ((net.minecraft.world.phys.BlockHitResult) blockHit).getBlockPos() : null,
                 isBlock && blockDist < entityDist);
 
-        // 7. 玩家看向目标（但拉弓时不强制看向，避免限制视角）
-        if (!self.isUsingItem()) {
+        // 7. 玩家看向目标
+        if (self.isUsingItem() && self.getUseItem().getItem() instanceof BowItem) {
+            // 弓蓄力：yaw = 射线命中点方向，pitch = 抛物线预计算
+            Vec3 eye = self.getEyePosition();
+            float bowYaw = (float) Math.toDegrees(Math.atan2(-(target.x - eye.x), target.z - eye.z));
+            self.setYRot(bowYaw);
+
+            float power = BowItem.getPowerForTime(self.getTicksUsingItem());
+            double v0 = power * 3.0;
+            float bowPitch = computeBowPitch(eye, target, v0);
+            self.setXRot(bowPitch);
+        } else {
             self.lookAt(EntityAnchorArgument.Anchor.EYES, target);
         }
     }
 
+    // ==================== 弓抛物线预计算 ====================
+
+    /** 二分搜索：找到使箭矢轨迹命中 target 的 pitch 角 */
+    @Unique
+    private static float computeBowPitch(Vec3 eye, Vec3 target, double v0) {
+        double dx = target.x - eye.x;
+        double dz = target.z - eye.z;
+        double dist = Math.sqrt(dx * dx + dz * dz);
+        double dH = target.y - eye.y;
+
+        if (dist < 0.01) return 0f;
+        if (v0 < 0.001) return 45f; // 刚开弓，默认45°
+
+        double lo = -89.0, hi = 89.0;
+
+        // pitch ↑ → vy↓ → 抛物线 ↓（单调递减），所以搜索方向反过来
+        for (int iter = 0; iter < 30; iter++) {
+            double mid = (lo + hi) / 2.0;
+            double simH = simArrowHeightAtDist(eye, v0, mid, dist);
+
+            if (simH > dH) {
+                lo = mid; // 抛物线偏高 → 增大pitch（压低vy）
+            } else {
+                hi = mid; // 偏低 → 减小pitch（抬高vy）
+            }
+        }
+        return (float) ((lo + hi) / 2.0);
+    }
+
     /**
-     * 覆盖原版疾跑判定：去掉 forwardImpulse > 0.8 的条件，
-     * 改为「按键方向与玩家视线夹角 < 45°」
+     * 模拟箭矢飞行，返回水平距离达到 targetDist 时的高度差（相对于 eye.y）。
+     * 物理模型：空气阻力 0.99/tick，重力 0.05/tick²，初速 v0 block/tick。
      */
+    @Unique
+    private static double simArrowHeightAtDist(Vec3 eye, double v0, double pitchDeg, double targetDist) {
+        double pr = Math.toRadians(pitchDeg);
+        double vx = Math.cos(pr) * v0;
+        double vy = -Math.sin(pr) * v0; // Minecraft: look.y = -sin(pitch)
+        double px = 0, py = 0;
+
+        for (int t = 0; t < 200; t++) {
+            vx *= 0.99;
+            vy = vy * 0.99 - 0.05;
+            px += vx;
+            py += vy;
+            if (px >= targetDist) {
+                return py;
+            }
+        }
+        return py; // 200 tick 内未到达目标距离，返回最终高度
+    }
+
     @Inject(method = "aiStep", at = @At("TAIL"))
     private void overrideSprint(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();

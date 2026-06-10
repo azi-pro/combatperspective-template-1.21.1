@@ -7,9 +7,8 @@
     "CameraInvoker",
     "CameraMixin",
     "CameraTypeMixin",
-    "ClientLevelInvoker",
-    "CommandsMixin",
     "EntityMixin",
+    "FOVMixin",
     "GameRendererInvoker",
     "GameRendererMixin",
     "GuiMixin",
@@ -17,13 +16,10 @@
     "LevelRendererMixin",
     "LocalPlayerMixin",
     "LocalPlayerMoveMixin",
-    "MinecraftMixin",
-    "ModelPartCubeMixin",
     "MouseHandlerMixin"
   ],
   "client": [
-    "LivingEntityMixin",
-    "ProjectileTrajectoryMixin"
+    "LivingEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

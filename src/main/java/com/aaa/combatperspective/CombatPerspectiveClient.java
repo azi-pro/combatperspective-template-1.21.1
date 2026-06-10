@@ -6,7 +6,7 @@ package com.aaa.combatperspective;
 
 // 导入 CursorStore 数据存储类，用于在 Mixin 之间共享数据
 import com.aaa.combatperspective.data.HitStore;
-import com.aaa.combatperspective.data.ProjectileStore;
+
 
 // 导入 Blaze3D 渲染系统，用于控制深度测试等渲染状态
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -22,6 +22,11 @@ import net.minecraft.client.Minecraft;
 
 // 导入本地玩家类，表示当前客户端的玩家
 import net.minecraft.client.player.LocalPlayer;
+
+// 导入弓物品类，用于判断拉弓状态
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.core.registries.Registries;
 
 // 导入多缓冲源类，用于渲染几何体到屏幕
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -55,7 +60,6 @@ import net.minecraft.world.phys.HitResult;
 
 // 导入三维向量类，用于表示位置和方向
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.level.block.state.BlockState;
 
 // 导入分布标记注解，用于区分客户端/服务端代码
 import net.neoforged.api.distmarker.Dist;
@@ -95,6 +99,9 @@ import net.neoforged.neoforge.common.NeoForge;
 
 // 导入 JOML 矩阵类，用于 3D 变换
 import org.joml.Matrix4f;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // =============================================================================
 // 客户端专用模组主类
@@ -214,12 +221,6 @@ public class CombatPerspectiveClient {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        // ---- 第三人称头顶方块透明 ----
-        if (isThirdPersonBack(mc)) {
-            var poseStack = event.getPoseStack();
-            var bufferSource = mc.renderBuffers().bufferSource();
-            renderTransparentBlockAbovePlayer(mc, event, bufferSource);
-        }
 
         // 获取主相机，用于计算相对坐标
         Camera cam = mc.gameRenderer.getMainCamera();
@@ -236,261 +237,227 @@ public class CombatPerspectiveClient {
         var bufferSource = mc.renderBuffers().bufferSource();
 
         // -------------------------------------------------------------------------
-        // ---- 第二部分：绘制玩家视线射线命中框 ----
-        // 根据玩家朝向（鼠标控制）绘制方块或实体选中框
+        // ---- 第二部分：命中检测与渲染 ----
         // -------------------------------------------------------------------------
 
         // 获取当前玩家
         LocalPlayer player = mc.player;
-
-        // 计算玩家眼睛位置
         Vec3 eye = player.getEyePosition();
-
-        // 计算玩家视线方向向量（1.0F 表示使用完整视角范围）
         Vec3 look = player.getViewVector(1.0F);
 
-        // 计算射线终点：眼睛位置 + 方向 * 10 格距离
-        Vec3 end = eye.add(look.scale(10.0));
+        // ---- 弹射物轨迹检测（弓/弩/三叉戟/末影珍珠/雪球/鸡蛋/风弹） ----
+        ProjectileParams params = getTrajectoryParams(player);
 
-        // -------------------------------------------------------------------------
-        // 方块碰撞检测
-        // ClipContext：射线检测上下文
-        // OUTLINE：只检测方块轮廓（不填充）
-        // NONE：不检测液体
-        // player：检测实体，用于忽略玩家自身的碰撞
-        // -------------------------------------------------------------------------
-        ClipContext blockCtx = new ClipContext(eye, end,
-                ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+        if (params != null) {
+            List<Vec3> traj = simulateTrajectory(player, params.v0, params.gravity, params.drag);
+            renderEntitiesOnTrajectory(bufferSource, poseStack, camPos, player, traj);
+            renderBowTrajectory(bufferSource, poseStack, camPos, player, traj);
+        } else {
+            // ---- 普通模式：10格射线 → 方块/实体命中框 ----
+            Vec3 end = eye.add(look.scale(10.0));
 
-        // 执行方块射线检测，返回最近的命中结果
-        BlockHitResult blockHit = player.level().clip(blockCtx);
+            // 方块检测
+            ClipContext blockCtx = new ClipContext(eye, end,
+                    ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player);
+            BlockHitResult blockHit = player.level().clip(blockCtx);
 
-        // -------------------------------------------------------------------------
-        // 实体碰撞检测
-        // 首先定义一个扫描包围盒，涵盖玩家前方的区域
-        // expandTowards：根据视线方向扩展包围盒
-        // inflate：扩大 1 格，确保能检测到实体
-        // -------------------------------------------------------------------------
-        AABB sweepBox = player.getBoundingBox().expandTowards(look.scale(10.0)).inflate(1.0);
+            // 实体检测
+            AABB sweepBox = player.getBoundingBox().expandTowards(look.scale(10.0)).inflate(1.0);
+            EntityHitResult entityHit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
+                    player.level(), player, eye, end, sweepBox,
+                    e -> !e.isSpectator() && e.isPickable());
 
-        // 使用 ProjectileUtil 的实体扫描方法
-        // lambda 表达式过滤条件：不是旁观者且可被拾取
-        EntityHitResult entityHit = net.minecraft.world.entity.projectile.ProjectileUtil.getEntityHitResult(
-                player.level(), player, eye, end, sweepBox,
-                e -> !e.isSpectator() && e.isPickable());
+            double blockDist = blockHit.getType() == HitResult.Type.BLOCK
+                    ? eye.distanceToSqr(blockHit.getLocation()) : Double.MAX_VALUE;
+            double entityDist = entityHit != null
+                    ? eye.distanceToSqr(entityHit.getLocation()) : Double.MAX_VALUE;
 
-        // -------------------------------------------------------------------------
-        // 比较方块和实体哪个更近
-        // distanceToSqr：计算距离的平方（避免开方运算，提高性能）
-        // -------------------------------------------------------------------------
-        double blockDist = blockHit.getType() == HitResult.Type.BLOCK
-                ? eye.distanceToSqr(blockHit.getLocation()) : Double.MAX_VALUE;
-        double entityDist = entityHit != null
-                ? eye.distanceToSqr(entityHit.getLocation()) : Double.MAX_VALUE;
-
-        // -------------------------------------------------------------------------
-        // 根据最近的命中结果绘制选中框
-        // -------------------------------------------------------------------------
-
-        // 如果方块更近且确实命中了方块
-        if (blockDist < entityDist && blockHit.getType() == HitResult.Type.BLOCK) {
-            // 获取命中位置
-            Vec3 hitPos = blockHit.getLocation();
-
-            // 计算实际距离（开方）
-            double dist = Math.sqrt(blockDist);
-
-            // 判断是否在交互范围内
-            boolean inRange = dist <= player.blockInteractionRange();
-
-            // 在范围内显示黄色，超出范围显示红色
-            int color = inRange ? 0xFFFFFF00 : 0xFFFF0000;
-
-            // 保存坐标变换状态
-            poseStack.pushPose();
-
-            // 将原点移动到命中方块位置
-            poseStack.translate(hitPos.x - camPos.x, hitPos.y - camPos.y, hitPos.z - camPos.z);
-
-            // 获取变换矩阵
-            Matrix4f mat2 = poseStack.last().pose();
-
-            // 绘制方块面边框
-            renderFaceOutline(bufferSource, mat2, blockHit.getDirection(), blockHit.getBlockPos(), hitPos, color);
-
-            // 恢复坐标变换
-            poseStack.popPose();
-        }
-        // 否则如果实体更近（或存在）
-        else if (entityHit != null) {
-            // 获取被命中的实体
-            Entity target = entityHit.getEntity();
-
-            // 计算实际距离
-            double dist = Math.sqrt(entityDist);
-
-            // 判断是否在交互范围内
-            boolean inRange = dist <= player.blockInteractionRange();
-
-            // 在范围内显示黄色，超出范围显示红色
-            int color = inRange ? 0xFFFFFF00 : 0xFFFF0000;
-
-            // 保存坐标变换状态
-            poseStack.pushPose();
-
-            // 绘制实体包围盒线框
-            renderEntityAABB(bufferSource, poseStack, target, camPos, color);
-
-            // 恢复坐标变换
-            poseStack.popPose();
-        }
-
-        // ---- 第三部分：绘制投射物抛物线轨迹 ----
-        var trajectory = ProjectileStore.getTrajectoryPoints();
-        if (ProjectileStore.isEnabled() && !trajectory.isEmpty()) {
-            renderProjectileTrajectory(poseStack, bufferSource, camPos, trajectory);
+            if (blockDist < entityDist && blockHit.getType() == HitResult.Type.BLOCK) {
+                Vec3 hitPos = blockHit.getLocation();
+                double dist = Math.sqrt(blockDist);
+                boolean inRange = dist <= player.blockInteractionRange();
+                int color = inRange ? 0xFFFFFF00 : 0xFFFF0000;
+                poseStack.pushPose();
+                poseStack.translate(hitPos.x - camPos.x, hitPos.y - camPos.y, hitPos.z - camPos.z);
+                Matrix4f mat2 = poseStack.last().pose();
+                renderFaceOutline(bufferSource, mat2, blockHit.getDirection(), blockHit.getBlockPos(), hitPos, color);
+                poseStack.popPose();
+            } else if (entityHit != null) {
+                Entity target = entityHit.getEntity();
+                double dist = Math.sqrt(entityDist);
+                boolean inRange = dist <= player.entityInteractionRange();
+                int color = inRange ? 0xFFFFFF00 : 0xFFFF0000;
+                poseStack.pushPose();
+                renderEntityAABB(bufferSource, poseStack, target, camPos, color);
+                poseStack.popPose();
+            }
         }
 
         // 重新启用深度测试，恢复正常渲染
         RenderSystem.enableDepthTest();
     }
 
+    // ==================== 弓轨迹预测线 ====================
 
-    // =========================================================================
-    // 第三人称头顶方块透明
-    // =========================================================================
-    
-    private static boolean isThirdPersonBack(Minecraft mc) {
-        return !mc.options.getCameraType().isFirstPerson()
-                && !mc.options.getCameraType().isMirrored();
+    /** 弹射物物理参数 */
+    private record ProjectileParams(double v0, double gravity, double drag) {}
+
+    /**
+     * 根据玩家手持/使用物品返回弹射物参数，没有匹配则返回 null。
+     */
+    private static ProjectileParams getTrajectoryParams(LocalPlayer player) {
+        ItemStack mainHand = player.getMainHandItem();
+        ItemStack useItem = player.getUseItem();
+        Item mainItem = mainHand.getItem();
+
+        // ---- 使用中显示 ----
+        if (player.isUsingItem()) {
+            if (useItem.getItem() instanceof BowItem) {
+                float power = BowItem.getPowerForTime(player.getTicksUsingItem());
+                return new ProjectileParams(power * 3.0, 0.05, 0.99);
+            }
+            if (useItem.getItem() instanceof TridentItem) {
+                // 有激流附魔时不投掷三叉戟
+                var enchants = useItem.getEnchantments();
+                var riptide = player.level().registryAccess()
+                        .registryOrThrow(Registries.ENCHANTMENT)
+                        .getHolderOrThrow(Enchantments.RIPTIDE);
+                if (enchants.getLevel(riptide) > 0)
+                    return null;
+                return new ProjectileParams(2.5, 0.05, 0.99);
+            }
+        }
+
+        // ---- 手持时显示 ----
+        if (mainItem instanceof CrossbowItem && CrossbowItem.isCharged(mainHand)) {
+            return new ProjectileParams(3.15, 0.05, 0.99);
+        }
+        if (mainItem instanceof EnderpearlItem) {
+            return new ProjectileParams(1.5, 0.03, 0.99);
+        }
+        if (mainItem instanceof SnowballItem) {
+            return new ProjectileParams(1.5, 0.05, 0.99);
+        }
+        if (mainItem instanceof EggItem) {
+            return new ProjectileParams(1.5, 0.05, 0.99);
+        }
+        if (mainItem instanceof WindChargeItem) {
+            return new ProjectileParams(1.5, 0.0, 1.0); // 无重力无阻力 → 直线
+        }
+
+        return null;
     }
 
     /**
-     * 渲染玩家头顶方块的半透明覆盖层
+     * 模拟弹射物飞行轨迹，返回世界坐标点列表。
+     * @param v0      初速 (block/tick)
+     * @param gravity 重力 (block/tick²)，0 = 无重力直线
+     * @param drag    空气阻力系数 (1.0 = 无阻力)
      */
-    private static void renderTransparentBlockAbovePlayer(Minecraft mc, RenderLevelStageEvent event, MultiBufferSource.BufferSource bufferSource) {
-        if (mc.player == null || mc.level == null) return;
+    private static List<Vec3> simulateTrajectory(LocalPlayer player, double v0, double gravity, double drag) {
+        List<Vec3> points = new ArrayList<>();
+        if (v0 < 0.01) return points;
 
-        LocalPlayer player = mc.player;
-        
-        // 玩家头顶方块位置
-        BlockPos headPos = BlockPos.containing(player.position()).above();
-        BlockState state = mc.level.getBlockState(headPos);
+        double yr = Math.toRadians(player.getYRot());
+        double pr = Math.toRadians(player.getXRot());
+        double vx = -Math.sin(yr) * Math.cos(pr) * v0;
+        double vy = -Math.sin(pr) * v0;
+        double vz = Math.cos(yr) * Math.cos(pr) * v0;
 
-        // 跳过空气
-        if (state.isAir()) {
-            return;
+        double px = player.getEyePosition().x;
+        double py = player.getEyePosition().y;
+        double pz = player.getEyePosition().z;
+        points.add(new Vec3(px, py, pz));
+
+        int maxTicks = (gravity == 0.0 && drag >= 1.0) ? 50 : 200; // 直线模式缩短
+
+        for (int t = 0; t < maxTicks; t++) {
+            vx *= drag;
+            vy = vy * drag - gravity;
+            vz *= drag;
+            px += vx;
+            py += vy;
+            pz += vz;
+            points.add(new Vec3(px, py, pz));
         }
-
-        Camera cam = mc.gameRenderer.getMainCamera();
-        var poseStack = event.getPoseStack();
-        Vec3 camPos = cam.getPosition();
-
-        poseStack.pushPose();
-        poseStack.translate(headPos.getX() - camPos.x, headPos.getY() - camPos.y, headPos.getZ() - camPos.z);
-
-        Matrix4f mat = poseStack.last().pose();
-
-        // 设置混合模式
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 0.5f);
-        
-        // 使用半透明渲染类型
-        VertexConsumer buf = bufferSource.getBuffer(RenderType.translucent());
-
-        // 50% 不透明度用于测试
-        int alpha = 128;
-        int color = (alpha << 24) | 0xFFFFFF;
-
-        // 绘制 6 个面
-        // 顶面 (Y+)
-        addVertex(buf, mat, 0, 1, 0, color, 0, 1, 0);
-        addVertex(buf, mat, 1, 1, 0, color, 0, 1, 0);
-        addVertex(buf, mat, 1, 1, 1, color, 0, 1, 0);
-        addVertex(buf, mat, 0, 1, 1, color, 0, 1, 0);
-
-        // 底面 (Y-)
-        addVertex(buf, mat, 0, 0, 1, color, 0, -1, 0);
-        addVertex(buf, mat, 1, 0, 1, color, 0, -1, 0);
-        addVertex(buf, mat, 1, 0, 0, color, 0, -1, 0);
-        addVertex(buf, mat, 0, 0, 0, color, 0, -1, 0);
-
-        // 北面 (Z-)
-        addVertex(buf, mat, 1, 0, 0, color, 0, 0, -1);
-        addVertex(buf, mat, 0, 0, 0, color, 0, 0, -1);
-        addVertex(buf, mat, 0, 1, 0, color, 0, 0, -1);
-        addVertex(buf, mat, 1, 1, 0, color, 0, 0, -1);
-
-        // 南面 (Z+)
-        addVertex(buf, mat, 0, 0, 1, color, 0, 0, 1);
-        addVertex(buf, mat, 1, 0, 1, color, 0, 0, 1);
-        addVertex(buf, mat, 1, 1, 1, color, 0, 0, 1);
-        addVertex(buf, mat, 0, 1, 1, color, 0, 0, 1);
-
-        // 西面 (X-)
-        addVertex(buf, mat, 0, 0, 0, color, -1, 0, 0);
-        addVertex(buf, mat, 0, 0, 1, color, -1, 0, 0);
-        addVertex(buf, mat, 0, 1, 1, color, -1, 0, 0);
-        addVertex(buf, mat, 0, 1, 0, color, -1, 0, 0);
-
-        // 东面 (X+)
-        addVertex(buf, mat, 1, 0, 1, color, 1, 0, 0);
-        addVertex(buf, mat, 1, 0, 0, color, 1, 0, 0);
-        addVertex(buf, mat, 1, 1, 0, color, 1, 0, 0);
-        addVertex(buf, mat, 1, 1, 1, color, 1, 0, 0);
-
-        bufferSource.endBatch(RenderType.translucent());
-
-        poseStack.popPose();
+        return points;
     }
+
+    /** 检测轨迹穿过的所有实体，渲染红色 AABB 线框（不受 10 格攻击距离限制） */
+    private static void renderEntitiesOnTrajectory(MultiBufferSource.BufferSource src, PoseStack ps,
+                                                   Vec3 camPos, LocalPlayer player, List<Vec3> traj) {
+        if (traj.isEmpty()) return;
+
+        // 构建覆盖整条轨迹的包围盒
+        Vec3 first = traj.get(0);
+        double minX = first.x, minY = first.y, minZ = first.z;
+        double maxX = first.x, maxY = first.y, maxZ = first.z;
+        for (Vec3 p : traj) {
+            if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+            if (p.z < minZ) minZ = p.z; if (p.z > maxZ) maxZ = p.z;
+        }
+        AABB trajBounds = new AABB(minX, minY, minZ, maxX, maxY, maxZ).inflate(1.0);
+
+        // 获取轨迹范围内的实体
+        List<Entity> nearby = player.level().getEntitiesOfClass(Entity.class, trajBounds,
+                e -> e != player && !e.isSpectator() && e.isPickable());
+
+        // 检测每段轨迹是否与实体 AABB 相交
+        for (Entity entity : nearby) {
+            AABB box = entity.getBoundingBox();
+            for (int i = 0; i < traj.size() - 1; i++) {
+                if (box.clip(traj.get(i), traj.get(i + 1)).isPresent()) {
+                    ps.pushPose();
+                    renderEntityAABB(src, ps, entity, camPos, 0xFFFF0000);
+                    ps.popPose();
+                    break; // 命中一次就够了
+                }
+            }
+        }
+    }
+
+    /** 模拟箭矢飞行轨迹并在世界中渲染线段 */
+    private static void renderBowTrajectory(MultiBufferSource.BufferSource src, PoseStack ps,
+                                            Vec3 camPos, LocalPlayer player, List<Vec3> traj) {
+        if (traj.size() < 2) return;
+
+        Vec3 eye = traj.get(0);
+        Vec3 hit = HitStore.getPos();
+        double hitDist = (hit != null)
+                ? Math.sqrt((hit.x - eye.x) * (hit.x - eye.x) + (hit.z - eye.z) * (hit.z - eye.z))
+                : Double.MAX_VALUE;
+
+        ps.pushPose();
+        Matrix4f mat = ps.last().pose();
+        VertexConsumer buf = src.getBuffer(RenderType.LINES);
+
+        for (int i = 0; i < traj.size() - 1; i++) {
+            Vec3 a = traj.get(i);
+            Vec3 b = traj.get(i + 1);
+
+            // 绿 → 红渐变：距离越远准确率越低
+            double curDist = Math.sqrt((b.x - eye.x) * (b.x - eye.x) + (b.z - eye.z) * (b.z - eye.z));
+            double ratio = Math.min(curDist / Math.max(hitDist, 1.0), 1.0);
+            int r = (int)(ratio * 255);
+            int g = (int)((1.0 - ratio) * 255);
+            int color = (0xFF << 24) | (r << 16) | (g << 8);
+
+            buf.addVertex(mat, (float)(a.x - camPos.x), (float)(a.y - camPos.y), (float)(a.z - camPos.z))
+               .setColor(color).setNormal(0, 1, 0);
+            buf.addVertex(mat, (float)(b.x - camPos.x), (float)(b.y - camPos.y), (float)(b.z - camPos.z))
+               .setColor(color).setNormal(0, 1, 0);
+
+            if (curDist > hitDist + 10) break;
+        }
+        ps.popPose();
+    }
+
 
     private static void addVertex(VertexConsumer buf, Matrix4f mat, float x, float y, float z, int color, float nx, float ny, float nz) {
         buf.addVertex(mat, x, y, z).setColor(color).setNormal(nx, ny, nz).setUv(0, 0).setUv2(240, 240);
     }
 
-    // =========================================================================
-    // 绘制面朝摄像头的十字标记
-    // param src 顶点缓冲源
-    // param mat 当前变换矩阵
-    // param camPos 相机位置
-    // param hitPos 命中位置
-    // param color 颜色（ARGB格式）
-    // =========================================================================
-    private static void renderCross(MultiBufferSource.BufferSource src, Matrix4f mat,
-                                    Vec3 camPos, Vec3 hitPos, int color) {
-        // 获取线条类型的顶点缓冲
-        VertexConsumer buf = src.getBuffer(RenderType.LINES);
-
-        // 十字大小（0.1 格）
-        float s = 0.1F;
-
-        // 计算从命中点指向相机的方向（十字朝向）
-        Vec3 fwd = camPos.subtract(hitPos).normalize();
-
-        // 计算右向量：forward × 世界Y轴（叉积得到垂直方向）
-        Vec3 right = fwd.cross(new Vec3(0, 1, 0)).normalize();
-
-        // 计算上向量：right × forward（得到垂直于两者的方向）
-        Vec3 up = right.cross(fwd).normalize();
-
-        // -------------------------------------------------------------------------
-        // 绘制水平线
-        // 从左到右的线段
-        // buf.addVertex：添加一个顶点，包含位置、颜色和法线
-        // setColor：设置顶点颜色
-        // setNormal：设置法线（用于光照计算）
-        // -------------------------------------------------------------------------
-        buf.addVertex(mat, (float)(-right.x * s), (float)(-right.y * s), (float)(-right.z * s))
-                .setColor(color).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-        buf.addVertex(mat, (float)( right.x * s), (float)( right.y * s), (float)( right.z * s))
-                .setColor(color).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-
-        buf.addVertex(mat, (float)(-up.x * s), (float)(-up.y * s), (float)(-up.z * s))
-                .setColor(color).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-        buf.addVertex(mat, (float)( up.x * s), (float)( up.y * s), (float)( up.z * s))
-                .setColor(color).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-    }
 
     // =========================================================================
     // 绘制方块被命中面的边框（LINE_STRIP 模式）
@@ -554,19 +521,7 @@ public class CombatPerspectiveClient {
         // 获取线条类型的顶点缓冲
         VertexConsumer buf = src.getBuffer(RenderType.LINES);
 
-        // -------------------------------------------------------------------------
-        // 绘制底面（Y = y1 的四个边）
-        // -------------------------------------------------------------------------
-        line(buf, mat, x1, y1, z1, x2, y1, z1, color); // 前边
-        line(buf, mat, x2, y1, z1, x2, y1, z2, color); // 右边
-        line(buf, mat, x2, y1, z2, x1, y1, z2, color); // 后边
-        line(buf, mat, x1, y1, z2, x1, y1, z1, color); // 左边
 
-        // -------------------------------------------------------------------------
-        // 绘制顶面（Y = y2 的四个边）
-        // -------------------------------------------------------------------------
-        line(buf, mat, x1, y2, z1, x2, y2, z1, color); // 前边
-        line(buf, mat, x2, y2, z1, x2, y2, z2, color); // 右边
         line(buf, mat, x2, y2, z2, x1, y2, z2, color); // 后边
         line(buf, mat, x1, y2, z2, x1, y2, z1, color); // 左边
 
@@ -650,156 +605,11 @@ public class CombatPerspectiveClient {
         // 左上 = 中心 + 上 - 右
         // -------------------------------------------------------------------------
         return new float[]{
-                cx - ux - vx, cy - uy - vy, cz - uz - vz,  // 左下
-                cx - ux + vx, cy - uy + vy, cz - uz + vz,  // 右下
-                cx + ux + vx, cy + uy + vy, cz + uz + vz,  // 右上
-                cx + ux - vx, cy + uy - vy, cz + uz - vz,  // 左上
+                cx - ux - vx, cy - uy - vy, cz - uz - vz,
+                cx - ux + vx, cy - uy + vy, cz - uz + vz,
+                cx + ux + vx, cy + uy + vy, cz + uz + vz,
+                cx + ux - vx, cy + uy - vy, cz + uz - vz,
         };
     }
 
-
-    // =========================================================================
-    // ===================== 投射物抛物线轨迹渲染 =====================
-    // =========================================================================
-
-    /** 抛物线轨迹颜色 (淡黄色) */
-    private static final int TRAJECTORY_COLOR = 0x80FFAA00;
-    
-    /** 落点标记颜色 (绿色) */
-    private static final int LANDING_COLOR = 0xFF00FF00;
-
-    /**
-     * 渲染投射物抛物线轨迹
-     */
-    private static void renderProjectileTrajectory(PoseStack poseStack,
-                                                   MultiBufferSource.BufferSource bufferSource,
-                                                   Vec3 camPos,
-                                                   java.util.List<ProjectileStore.TrajectoryPoint> trajectory) {
-        
-        if (trajectory.size() < 2) return;
-        
-        VertexConsumer buf = bufferSource.getBuffer(RenderType.LINES);
-        Matrix4f mat = poseStack.last().pose();
-        
-        poseStack.pushPose();
-        
-        // 绘制圆润的抛物线轨迹（使用密集的点 + 颜色渐变）
-        int numSegments = trajectory.size() - 1;
-        for (int i = 0; i < numSegments; i++) {
-            var p1 = trajectory.get(i);
-            var p2 = trajectory.get(i + 1);
-            
-            // 计算距离和透明度
-            double dist = p1.position.distanceTo(trajectory.get(0).position);
-            float fade = (float) Math.max(0.15, 1.0 - dist / 80.0);
-            int alpha = (int) (fade * 220);
-            
-            // 主轨迹线颜色（橙黄色）
-            int lineColor = (alpha << 24) | 0xFFAA00;
-            
-            float x1 = (float)(p1.position.x - camPos.x);
-            float y1 = (float)(p1.position.y - camPos.y);
-            float z1 = (float)(p1.position.z - camPos.z);
-            float x2 = (float)(p2.position.x - camPos.x);
-            float y2 = (float)(p2.position.y - camPos.y);
-            float z2 = (float)(p2.position.z - camPos.z);
-            
-            // 绘制主轨迹线
-            buf.addVertex(mat, x1, y1, z1).setColor(lineColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            buf.addVertex(mat, x2, y2, z2).setColor(lineColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            
-            // 在每个轨迹点上绘制小圆点标记（增加圆润感）
-            if (i % 2 == 0) {
-                float px = x2, py = y2, pz = z2;
-                float dotRadius = 0.03f + (fade * 0.02f);
-                int dotAlpha = (int) (alpha * 0.8);
-                int dotColor = (dotAlpha << 24) | 0xFFFF88;
-                
-                // 绘制小圆点（8个点组成的近似圆）
-                for (int j = 0; j < 8; j++) {
-                    float a1 = (float)(j * Math.PI * 2 / 8);
-                    float a2 = (float)((j + 1) * Math.PI * 2 / 8);
-                    
-                    buf.addVertex(mat, px + (float)(Math.cos(a1) * dotRadius), py, pz + (float)(Math.sin(a1) * dotRadius))
-                        .setColor(dotColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-                    buf.addVertex(mat, px + (float)(Math.cos(a2) * dotRadius), py, pz + (float)(Math.sin(a2) * dotRadius))
-                        .setColor(dotColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-                }
-            }
-        }
-        
-        // 绘制落点标记（更大更醒目）
-        Vec3 landingPos = ProjectileStore.getLandingPos();
-        if (landingPos != null) {
-            float lx = (float)(landingPos.x - camPos.x);
-            float ly = (float)(landingPos.y - camPos.y);
-            float lz = (float)(landingPos.z - camPos.z);
-            
-            // 落点高亮颜色（明亮的绿色）
-            int landingColor = 0xFF00FF00;
-            int landingHighlight = 0xFFFFFF00;  // 黄色高亮
-            
-            // 外圈（大圆，绿色）
-            float outerRadius = 0.8f;
-            int segments = 24;
-            for (int i = 0; i < segments; i++) {
-                float a1 = (float)(i * 2 * Math.PI / segments);
-                float a2 = (float)((i + 1) * 2 * Math.PI / segments);
-                
-                buf.addVertex(mat, lx + (float)(Math.cos(a1) * outerRadius), ly, lz + (float)(Math.sin(a1) * outerRadius))
-                    .setColor(landingColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-                buf.addVertex(mat, lx + (float)(Math.cos(a2) * outerRadius), ly, lz + (float)(Math.sin(a2) * outerRadius))
-                    .setColor(landingColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            }
-            
-            // 内圈（小圆，黄色）
-            float innerRadius = 0.4f;
-            for (int i = 0; i < segments; i++) {
-                float a1 = (float)(i * 2 * Math.PI / segments);
-                float a2 = (float)((i + 1) * 2 * Math.PI / segments);
-                
-                buf.addVertex(mat, lx + (float)(Math.cos(a1) * innerRadius), ly, lz + (float)(Math.sin(a1) * innerRadius))
-                    .setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-                buf.addVertex(mat, lx + (float)(Math.cos(a2) * innerRadius), ly, lz + (float)(Math.sin(a2) * innerRadius))
-                    .setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            }
-            
-            // 落点十字（更大）
-            float crossSize = 0.6f;
-            buf.addVertex(mat, lx - crossSize, ly, lz - crossSize).setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            buf.addVertex(mat, lx + crossSize, ly, lz + crossSize).setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            buf.addVertex(mat, lx + crossSize, ly, lz - crossSize).setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            buf.addVertex(mat, lx - crossSize, ly, lz + crossSize).setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            
-            // 垂直线（指向落点）
-            buf.addVertex(mat, lx, ly - crossSize, lz).setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            buf.addVertex(mat, lx, ly + crossSize, lz).setColor(landingHighlight).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-            
-            // 从落点延伸的虚线（表示弓箭飞行的最后阶段）
-            if (trajectory.size() >= 3) {
-                var penultimate = trajectory.get(trajectory.size() - 2);
-                float px = (float)(penultimate.position.x - camPos.x);
-                float py = (float)(penultimate.position.y - camPos.y);
-                float pz = (float)(penultimate.position.z - camPos.z);
-                
-                int dashedColor = (150 << 24) | 0xFFAA00;
-                for (int i = 0; i < 5; i++) {
-                    float t1 = 0.2f + i * 0.15f;
-                    float t2 = t1 + 0.1f;
-                    
-                    float xDash1 = px + (lx - px) * t1;
-                    float yDash1 = py + (ly - py) * t1;
-                    float zDash1 = pz + (lz - pz) * t1;
-                    float xDash2 = px + (lx - px) * t2;
-                    float yDash2 = py + (ly - py) * t2;
-                    float zDash2 = pz + (lz - pz) * t2;
-                    
-                    buf.addVertex(mat, xDash1, yDash1, zDash1).setColor(dashedColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-                    buf.addVertex(mat, xDash2, yDash2, zDash2).setColor(dashedColor).setNormal(0, 1, 0).setUv(0, 0).setUv2(240, 240);
-                }
-            }
-        }
-        
-        poseStack.popPose();
-    }
 }

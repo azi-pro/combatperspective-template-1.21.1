@@ -77,18 +77,7 @@ public class MouseHandlerMixin {
 
     }
 
-    @Inject(method = "turnPlayer(D)V", at = @At("HEAD"), cancellable = true)
-    private void lockCameraInThirdPerson(double movementTime, CallbackInfo ci) {
-        Minecraft mc = Minecraft.getInstance();
-        if (isthirdPersonback(mc) && mc.screen == null) {
-            // 如果正在蓄力弓，允许转动视角
-            if (mc.player != null && mc.player.isUsingItem()) {
-                // 允许转动 - 不取消
-                return;
-            }
-            ci.cancel();
-        }
-    }
+
     @Inject(method = "handleAccumulatedMovement()V", at = @At("HEAD"))
     private void manageCursorInThirdPerson(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
